@@ -13,7 +13,7 @@ export default function Intro({ ready, t, onEnter, onDone }) {
       ))}
       <div className="stage">
         <div className="halo" />
-        {img ? <img className="cartoon" src="/intro.png" alt="" onError={() => setImg(false)} />
+        {img ? <img className="cartoon" src="/12.png" alt="" onError={() => setImg(false)} />
           : <div className="cartoon fb"><Flame size={96} /></div>}
       </div>
       <h1 className="jay">দুর্গা মাই কি জয়</h1>
