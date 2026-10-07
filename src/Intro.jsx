@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react'
 import Flame from './Flame'
+import introImage from './assets/intro.png'
 
 
 export default function Intro({ ready, t, onEnter, onDone }) {
   const [progress, setProgress] = useState(0)
   const [imageError, setImageError] = useState(false)
   const [exiting, setExiting] = useState(false)
-  const introImage =
-  "https://zsltlczbxhuygpvdtclh.supabase.co/storage/v1/object/public/photos/intro.png";
   // Loading progress
   useEffect(() => {
     const timer = setInterval(() => {
