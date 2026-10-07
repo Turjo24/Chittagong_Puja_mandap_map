@@ -7,7 +7,7 @@ export default function Intro({ ready, t, onEnter, onDone }) {
   const [imageError, setImageError] = useState(false)
   const [exiting, setExiting] = useState(false)
   const introImage =
-  "https://zsltlczbxhuygpvdtclh.supabase.co/storage/v1/object/public/photos/intro123%20-%20Copy.png";
+  "https://zsltlczbxhuygpvdtclh.supabase.co/storage/v1/object/public/photos/intro.png";
   // Loading progress
   useEffect(() => {
     const timer = setInterval(() => {
