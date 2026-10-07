@@ -210,7 +210,7 @@ export default function Intro({ ready, t, onEnter, onDone }) {
         {/* Durga Image */}
         {!imageError ? (
           <img
-            src={introImage}
+            src="https://res.cloudinary.com/digybpxzg/image/upload/v1791358912/intro123_jype0i.png"
             alt="Durga Maa"
             className="
               relative
