@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Flame from './Flame'
+const introImage = new URL('./assets/Intro.png', import.meta.url).href
 
 export default function Intro({ ready, t, onEnter, onDone }) {
   const [progress, setProgress] = useState(0)
@@ -208,7 +209,7 @@ export default function Intro({ ready, t, onEnter, onDone }) {
         {/* Durga Image */}
         {!imageError ? (
           <img
-            src="/Intro.png"
+            src={introImage}
             alt="Durga Maa"
             className="
               relative
