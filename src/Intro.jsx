@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import Flame from './Flame'
-import introImage from './assests/intro123.png'
+
 
 export default function Intro({ ready, t, onEnter, onDone }) {
   const [progress, setProgress] = useState(0)
   const [imageError, setImageError] = useState(false)
   const [exiting, setExiting] = useState(false)
-
+  const introImage =
+  "https://res.cloudinary.com/digybpxzg/image/upload/v1791358912/intro123_jype0i.png";
   // Loading progress
   useEffect(() => {
     const timer = setInterval(() => {
@@ -210,7 +211,7 @@ export default function Intro({ ready, t, onEnter, onDone }) {
         {/* Durga Image */}
         {!imageError ? (
           <img
-            src="https://res.cloudinary.com/digybpxzg/image/upload/v1791358912/intro123_jype0i.png"
+            src={introImage}
             alt="Durga Maa"
             className="
               relative
