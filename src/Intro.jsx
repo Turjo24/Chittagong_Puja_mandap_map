@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import Flame from './Flame'
-const introImage = new URL('./assets/Intro.png', import.meta.url).href
+import introImage from "@/assets/Intro.png"
 
 export default function Intro({ ready, t, onEnter, onDone }) {
   const [progress, setProgress] = useState(0)
