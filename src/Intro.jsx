@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import Flame from './Flame'
 
-const introImage = '/intro.png'
-
-
+const introImage = 'public/intro.png'
 
 export default function Intro({ ready, t, onEnter, onDone }) {
   const [progress, setProgress] = useState(0)
