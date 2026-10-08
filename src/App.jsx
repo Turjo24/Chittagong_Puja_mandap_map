@@ -53,6 +53,7 @@ export default function App() {
   if (route.startsWith('#/schedule')) return sub(<Schedule lang={lang} />)
   if (route.startsWith('#/vote')) return sub(<Vote lang={lang} />)
   if (route.startsWith('#/reps')) return sub(<Reps lang={lang} />)
+  if (route.startsWith('#/player')) return sub(<Player lang={lang} />)
 
   const nm = (m) => (lang === 'bn' && m.name_bn ? m.name_bn : m.name)
   const areas = [...new Set(mandaps.map((m) => m.area).filter(Boolean))]
