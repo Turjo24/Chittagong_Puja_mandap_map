@@ -37,7 +37,6 @@ export default function Routes({ lang }) {
   return (
     <div className="page"><div className="wrap">
       <div className="shero">
-        <img src="./pntro.png" alt="Durga Maa" draggable="false" style={{ display: 'block', margin: '0 auto 10px', width: 110, height: 110, objectFit: 'contain' }} />
         <h2 className="title">{bn ? 'মণ্ডপে যেতে কত খরচ?' : 'Getting to the mandaps'}</h2>
         <p className="muted">{bn ? 'কোথা থেকে কোথায়, কিসে করে, আনুমানিক ভাড়া' : 'From where, by what, and the typical fare'}</p>
       </div>
