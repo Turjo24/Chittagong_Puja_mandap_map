@@ -88,8 +88,8 @@ export default function Suggest({ t, picked, onClose }) {
               <input required type="url" placeholder="Google Maps share link" value={link.url} onChange={(e) => setLink({ ...link, url: e.target.value })} />
               <p className="muted">
                 {needPin
-                  ? 'Ei link theke location ber hoyni (short link). Upore map-e pin kore dao, tahole oi location jabe.'
-                  : 'Maps app theke Share → Copy link kore paste korun. Location link theke nijei ber hobe.'}
+              ? 'এই লিংক থেকে লোকেশন বের করা যায়নি (শর্ট লিংক)। উপরের ম্যাপে পিন করে দিন, তাহলে সেই লোকেশনটি যুক্ত হয়ে যাবে।'
+                : 'Google Maps অ্যাপ থেকে Share → Copy link করে এখানে পেস্ট করুন। লিংক থেকেই স্বয়ংক্রিয়ভাবে লোকেশন বের হয়ে যাবে।'}
               </p>
               <input required placeholder={t.mname} value={link.name} onChange={(e) => setLink({ ...link, name: e.target.value })} />
             </>
