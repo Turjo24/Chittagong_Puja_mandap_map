@@ -97,7 +97,7 @@ export default function App() {
         </div>
         <div className="map">
           <MapView items={list} onSelect={choose} focus={focus} me={me} dark={dark} picked={suggest ? picked : null} onPick={suggest ? setPicked : null} />
-          <Player />
+          
           {sel && <Panel m={sel} name={nm(sel)} t={t} onClose={() => setSel(null)} />}
           {suggest && <Suggest t={t} picked={picked} onClose={() => setSuggest(false)} />}
         </div>
