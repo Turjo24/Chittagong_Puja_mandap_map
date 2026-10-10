@@ -32,7 +32,6 @@ export default function Suggest({ t, picked, onClose }) {
       const r = await sb.rpc('suggest_mandap', {
         p_name: link.name.trim(), p_area: '', p_address: '', p_theme: '', p_artist: '',
         p_lat: lat, p_lng: lng, p_by: 'Google Maps link', p_email: f.email.trim(), p_year: new Date().getFullYear(), p_photos: [],
-        ...(f.phone.trim() ? { p_phone: f.phone.trim() } : {}),
       })
       if (r.error) throw r.error
       setMsg(t.done); setLink({ url: '', name: '' })
@@ -42,7 +41,7 @@ export default function Suggest({ t, picked, onClose }) {
 
   async function submit(e) {
     e.preventDefault(); setMsg('')
-    if (!f.email.trim() && !f.phone.trim()) return setMsg('Email address ba phone number din.')
+    if (!f.email.trim() ) return setMsg('Email address din.')
     if (mode === 'link') return submitLink()
     if (!picked) return setMsg(t.pick)
     const err = check(files); if (err) return setMsg(err)
@@ -52,8 +51,7 @@ export default function Suggest({ t, picked, onClose }) {
       const r = await sb.rpc('suggest_mandap', {
         p_name: f.name.trim(), p_area: f.area.trim(), p_address: f.address.trim(), p_theme: f.theme.trim(), p_artist: f.artist.trim(),
         p_lat: picked.lat, p_lng: picked.lng, p_by: f.by.trim(), p_email: f.email.trim(), p_year: new Date().getFullYear(), p_photos: ups,
-        // phone dile tabei pathai, jate phone chhara submit age moto-i kaj kore
-        ...(f.phone.trim() ? { p_phone: f.phone.trim() } : {}),
+      
       })
       if (r.error) throw r.error
       setMsg(t.done); setFiles([])
@@ -95,7 +93,7 @@ export default function Suggest({ t, picked, onClose }) {
             </>
           )}
           <input type="email" placeholder={`${t.email} (optional)`} value={f.email} onChange={set('email')} />
-          <input type="tel" placeholder="Phone number (optional)" value={f.phone} onChange={set('phone')} />
+      
           <button className="btn pri" disabled={busy}>{busy ? t.sending : t.send}</button>
           {msg && <p className="msg">{msg}</p>}
         </form>
