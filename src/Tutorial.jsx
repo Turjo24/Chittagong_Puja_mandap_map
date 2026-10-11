@@ -4,8 +4,8 @@
   (youtu.be, youtube.com/watch?v=, shorts, embed, shob link cholbe)
 */
 const TUTORIALS = [
-  { title: 'Ei website kibhabe use korbe', url: 'https://youtu.be/VIDEO_ID_1' },
-  { title: 'Mandap er chhobi kibhabe upload korbe', url: 'https://youtu.be/VIDEO_ID_2' }
+  { title: 'Mandap Add Using Pc ', url: 'https://youtu.be/QLNrr8tLP_E' },
+  { title: 'Mandap Add Using Mobile', url: 'https://youtube.com/shorts/aT8VoRrJVfk?si=cvRAfjnUvp4s7WWt' }
 ]
 
 // link theke video id ber kore
@@ -53,7 +53,7 @@ export default function Tutorial() {
     <div className="tu">
       <style>{CSS}</style>
       <h2>Tutorial</h2>
-      <p className="tu-sub">Video chap dile YouTube e khulbe.</p>
+      <p className="tu-sub">ভিডিও লিংকে প্রেস করলে ভিডিও ওপেন হবে</p>
 
       {!TUTORIALS.length && <p className="tu-empty">Tutorial shighroi ashche.</p>}
 

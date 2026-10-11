@@ -260,6 +260,18 @@ export default function Suggest({ t, onClose }) {
           >
             🔗 Google Maps link ache
           </button>
+
+        
+<button
+  type="button"
+  className="btn"
+  onClick={() => {
+    window.location.hash = '/tutorial'
+    onClose?.()
+  }}
+>
+  📖 Mandap Add Tutorial
+</button>
         </div>
 
         <form onSubmit={submit}>
