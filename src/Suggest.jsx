@@ -1,10 +1,11 @@
+
 import { useState } from 'react'
 import { sb } from './supabase'
 import PhotoPicker from './PhotoPicker'
 import { check, uploadAll } from './upload'
 import { parseMapsUrl } from './parseMapsUrl'
 
-export default function Suggest({ t, picked, onClose }) {
+export default function Suggest({ t, onClose }) {
   const [f, setF] = useState({
     name: '',
     area: '',
@@ -17,46 +18,43 @@ export default function Suggest({ t, picked, onClose }) {
   })
 
   const [mode, setMode] = useState('map')
+
   const [link, setLink] = useState({
     url: '',
     name: '',
   })
 
+  // Editable coordinate fields.
+  // No automatic value from picked, so users can delete freely.
   const [lat, setLat] = useState('')
   const [lng, setLng] = useState('')
+
   const [files, setFiles] = useState([])
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
 
   const set = (k) => (e) =>
-    setF((prev) => ({ ...prev, [k]: e.target.value }))
+    setF((prev) => ({
+      ...prev,
+      [k]: e.target.value,
+    }))
 
-  // Map-e pin korle coordinate auto-fill.
-  // Manually edit korle edited value use hobe.
-  const latitude =
-    picked?.lat != null && !lat
-      ? String(picked.lat)
-      : lat
-
-  const longitude =
-    picked?.lng != null && !lng
-      ? String(picked.lng)
-      : lng
-
-  // Google Maps link parsing
+  // Parse coordinates from a Google Maps URL.
   const parsed =
     mode === 'link' && link.url.trim()
-      ? parseMapsUrl(link.url)
+      ? parseMapsUrl(link.url.trim())
       : null
 
   const needPin = !!parsed && parsed.lat == null
 
-  // Google Maps link submission
+  // Submit using a Google Maps link.
   async function submitLink() {
     const url = link.url.trim()
 
     if (
-      !/^https?:\/\/(www\.)?(google\.[a-z.]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps|maps\.google\.[a-z.]+)/i.test(url)
+      !/^https?:\/\/(www\.)?(google\.[a-z.]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps|maps\.google\.[a-z.]+)/i.test(
+        url
+      )
     ) {
       setMsg('Valid Google Maps link din.')
       return
@@ -67,10 +65,13 @@ export default function Suggest({ t, picked, onClose }) {
     const linkLat = p?.lat
     const linkLng = p?.lng
 
-    const finalLat = linkLat ?? picked?.lat
-    const finalLng = linkLng ?? picked?.lng
+    // Use manually entered coordinates as fallback.
+    const finalLat = linkLat ?? lat
+    const finalLng = linkLng ?? lng
 
     if (
+      finalLat === '' ||
+      finalLng === '' ||
       finalLat == null ||
       finalLng == null ||
       !Number.isFinite(Number(finalLat)) ||
@@ -81,13 +82,18 @@ export default function Suggest({ t, picked, onClose }) {
       Number(finalLng) > 180
     ) {
       setMsg(
-        'Link theke location pawa jayni. Full link din, ba map-e pin korun.'
+        'Coordinate ber kora jayni. Latitude o Longitude manually din.'
       )
       return
     }
 
     if (!link.name.trim()) {
       setMsg('Mandap-er naam din.')
+      return
+    }
+
+    if (!f.email.trim()) {
+      setMsg('Email address din.')
       return
     }
 
@@ -112,6 +118,8 @@ export default function Suggest({ t, picked, onClose }) {
 
       setMsg(t.done)
       setLink({ url: '', name: '' })
+      setLat('')
+      setLng('')
     } catch (x) {
       setMsg(x.message || 'Submit kora jayni.')
     } finally {
@@ -119,7 +127,7 @@ export default function Suggest({ t, picked, onClose }) {
     }
   }
 
-  // Main form submission
+  // Main form submission.
   async function submit(e) {
     e.preventDefault()
     setMsg('')
@@ -134,12 +142,16 @@ export default function Suggest({ t, picked, onClose }) {
       return
     }
 
-    const latitudeNum = Number(latitude)
-    const longitudeNum = Number(longitude)
+    // Validate the actual editable input values.
+    if (lat.trim() === '' || lng.trim() === '') {
+      setMsg('Latitude ebong Longitude duita-i din.')
+      return
+    }
+
+    const latitudeNum = Number(lat)
+    const longitudeNum = Number(lng)
 
     if (
-      !latitude.trim() ||
-      !longitude.trim() ||
       !Number.isFinite(latitudeNum) ||
       !Number.isFinite(longitudeNum) ||
       latitudeNum < -90 ||
@@ -147,7 +159,14 @@ export default function Suggest({ t, picked, onClose }) {
       longitudeNum < -180 ||
       longitudeNum > 180
     ) {
-      setMsg('Valid Latitude (-90 to 90) ebong Longitude (-180 to 180) din.')
+      setMsg(
+        'Valid Latitude (-90 to 90) ebong Longitude (-180 to 180) din.'
+      )
+      return
+    }
+
+    if (!f.name.trim()) {
+      setMsg('Mandap-er naam din.')
       return
     }
 
@@ -180,7 +199,10 @@ export default function Suggest({ t, picked, onClose }) {
       if (r.error) throw r.error
 
       setMsg(t.done)
+
       setFiles([])
+      setLat('')
+      setLng('')
     } catch (x) {
       setMsg(x.message || 'Submit kora jayni.')
     } finally {
@@ -198,7 +220,11 @@ export default function Suggest({ t, picked, onClose }) {
       }}
     >
       <div className="hero short" style={{ flexShrink: 0 }}>
-        <button className="x" onClick={onClose}>
+        <button
+          type="button"
+          className="x"
+          onClick={onClose}
+        >
           ✕
         </button>
 
@@ -221,7 +247,7 @@ export default function Suggest({ t, picked, onClose }) {
               setMsg('')
             }}
           >
-            ⭐ Map-e pin kore
+            📍 Coordinate diye submit
           </button>
 
           <button
@@ -235,22 +261,6 @@ export default function Suggest({ t, picked, onClose }) {
             🔗 Google Maps link ache
           </button>
         </div>
-
-        {mode === 'map' && (
-          <div className={`pickbox${picked ? ' ok' : ''}`}>
-            📍{' '}
-            {latitude && longitude
-              ? `${Number(latitude).toFixed(6)}, ${Number(longitude).toFixed(6)}`
-              : t.pick}
-          </div>
-        )}
-
-        {mode === 'link' && needPin && (
-          <div className="pickbox">
-            📍 Short link theke location ber hoyni.
-            Map-e pin korun othoba full Google Maps link din.
-          </div>
-        )}
 
         <form onSubmit={submit}>
           {mode === 'map' ? (
@@ -274,77 +284,82 @@ export default function Suggest({ t, picked, onClose }) {
                 onChange={set('address')}
               />
 
-              {/* Latitude and Longitude */}
-          {/* Latitude and Longitude */}
-<div
-  style={{
-    display: 'flex',
-    gap: 8,
-    marginBottom: 8,
-  }}
->
-  <label style={{ flex: 1, minWidth: 0 }}>
-    <span
-      style={{
-        display: 'block',
-        fontSize: 12,
-        fontWeight: 600,
-        marginBottom: 2,
-      }}
-    >
-      Latitude
-    </span>
+              {/* Editable Latitude and Longitude */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 10,
+                  marginBottom: 12,
+                }}
+              >
+                <label
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                  }}
+                >
+                  <span
+                    style={{
+                      display: 'block',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      marginBottom: 5,
+                    }}
+                  >
+                    Latitude
+                  </span>
 
-    <input
-      type="number"
-      step="any"
-      min="-90"
-      max="90"
-      required
-      placeholder="22.3569"
-      value={latitude}
-      onChange={(e) => setLat(e.target.value)}
-      style={{
-        width: '100%',
-        boxSizing: 'border-box',
-        margin: 0,
-        padding: '6px 8px',
-        fontSize: 13,
-      }}
-    />
-  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    min="-90"
+                    max="90"
+                    required
+                    placeholder="22.3569"
+                    value={lat}
+                    onChange={(e) => setLat(e.target.value)}
+                    style={{
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      margin: 0,
+                    }}
+                  />
+                </label>
 
-  <label style={{ flex: 1, minWidth: 0 }}>
-    <span
-      style={{
-        display: 'block',
-        fontSize: 12,
-        fontWeight: 600,
-        marginBottom: 2,
-      }}
-    >
-      Longitude
-    </span>
+                <label
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                  }}
+                >
+                  <span
+                    style={{
+                      display: 'block',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      marginBottom: 5,
+                    }}
+                  >
+                    Longitude
+                  </span>
 
-    <input
-      type="number"
-      step="any"
-      min="-180"
-      max="180"
-      required
-      placeholder="91.7832"
-      value={longitude}
-      onChange={(e) => setLng(e.target.value)}
-      style={{
-        width: '100%',
-        boxSizing: 'border-box',
-        margin: 0,
-        padding: '6px 8px',
-        fontSize: 13,
-      }}
-    />
-  </label>
-</div>
+                  <input
+                    type="number"
+                    step="any"
+                    min="-180"
+                    max="180"
+                    required
+                    placeholder="91.7832"
+                    value={lng}
+                    onChange={(e) => setLng(e.target.value)}
+                    style={{
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      margin: 0,
+                    }}
+                  />
+                </label>
+              </div>
 
               <input
                 placeholder={t.theme}
@@ -387,9 +402,8 @@ export default function Suggest({ t, picked, onClose }) {
               />
 
               <p className="muted">
-                Google Maps app theke Share → Copy link kore ekhane
-                paste korun. Full link hole coordinate automatically
-                ber hobe. Short link hole map-e pin korte hote pare.
+              গুগল ম্যাপস অ্যাপ থেকে শেয়ার → লিংক কপি করে এখানে পেস্ট করুন।
+               লিংক থেকে Latitude ও Longitude পাওয়া না গেলে নিচে নিজে লিখুন।
               </p>
 
               <input
@@ -403,17 +417,86 @@ export default function Suggest({ t, picked, onClose }) {
                   }))
                 }
               />
+
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 10,
+                  marginBottom: 12,
+                }}
+              >
+                <label style={{ flex: 1, minWidth: 0 }}>
+                  <span
+                    style={{
+                      display: 'block',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      marginBottom: 5,
+                    }}
+                  >
+                    Latitude
+                  </span>
+
+                  <input
+                    type="number"
+                    step="any"
+                    min="-90"
+                    max="90"
+                    placeholder="22.3569"
+                    value={lat}
+                    onChange={(e) => setLat(e.target.value)}
+                    style={{
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      margin: 0,
+                    }}
+                  />
+                </label>
+
+                <label style={{ flex: 1, minWidth: 0 }}>
+                  <span
+                    style={{
+                      display: 'block',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      marginBottom: 5,
+                    }}
+                  >
+                    Longitude
+                  </span>
+
+                  <input
+                    type="number"
+                    step="any"
+                    min="-180"
+                    max="180"
+                    placeholder="91.7832"
+                    value={lng}
+                    onChange={(e) => setLng(e.target.value)}
+                    style={{
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      margin: 0,
+                    }}
+                  />
+                </label>
+              </div>
             </>
           )}
 
           <input
+            required
             type="email"
-            placeholder={`${t.email} (optional)`}
+            placeholder={`${t.email} *`}
             value={f.email}
             onChange={set('email')}
           />
 
-          <button className="btn pri" disabled={busy}>
+          <button
+            type="submit"
+            className="btn pri"
+            disabled={busy}
+          >
             {busy ? t.sending : t.send}
           </button>
 
