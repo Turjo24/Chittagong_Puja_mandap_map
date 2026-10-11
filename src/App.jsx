@@ -17,7 +17,7 @@ const Schedule = lazy(() => import('./Schedule'))
 const Vote = lazy(() => import('./Vote'))
 const Routes = lazy(() => import('./Routes'))
 const Reps = lazy(() => import('./Reps'))
-
+const Parikroma = lazy(() => import('./Parikroma'))
 const hav = (a, b) => {
   const r = (x) => (x * Math.PI) / 180, dLat = r(b.lat - a.lat), dLng = r(b.lng - a.lng)
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dLng / 2) ** 2
@@ -33,7 +33,8 @@ export default function App() {
   const [me, setMe] = useState(null)
   const [suggest, setSuggest] = useState(false), [picked, setPicked] = useState(null)
   const [route, setRoute] = useState(location.hash)
-  const [loaded, setLoaded] = useState(false), [intro, setIntro] = useState(!sessionStorage.getItem('intro'))
+  // Shared/deep links (#/reps?id=.., #/sponsors?id=..) e intro dekhabo na
+  const [loaded, setLoaded] = useState(false), [intro, setIntro] = useState(!sessionStorage.getItem('intro') && !/^#\/./.test(location.hash))
   const t = T[lang]
 
   useEffect(() => { const f = () => setRoute(location.hash); addEventListener('hashchange', f); return () => removeEventListener('hashchange', f) }, [])
@@ -43,24 +44,36 @@ export default function App() {
       const c = {}; (data || []).forEach((p) => { if (!c[p.mandap_id]) c[p.mandap_id] = p.url }); setCovers(c)
     })
   }, [])
-  useEffect(() => { document.documentElement.dataset.theme = dark ? 'dark' : 'light'; localStorage.setItem('dark', dark ? '1' : '0') }, [dark])
+  useEffect(() => {
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+    document.documentElement.classList.toggle('dark', dark) // Tailwind dark: variant er jonno
+    document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+    localStorage.setItem('dark', dark ? '1' : '0')
+  }, [dark])
   useEffect(() => { localStorage.setItem('lang', lang) }, [lang])
 
   const sub = (el) => <><Live /><Nav lang={lang} setLang={setLang} dark={dark} setDark={setDark} route={route} tools /><Suspense fallback={<div className="page" />}>{el}</Suspense></>
-  if (route.startsWith('#/admin')) return <><Live /><Suspense fallback={null}><Admin /></Suspense></>
-  if (route.startsWith('#/sponsors')) return sub(<Sponsors lang={lang} />)
-  if (route.startsWith('#/routes')) return sub(<Routes lang={lang} />)
-  if (route.startsWith('#/schedule')) return sub(<Schedule lang={lang} />)
-  if (route.startsWith('#/vote')) return sub(<Vote lang={lang} />)
-  if (route.startsWith('#/reps')) return sub(<Reps lang={lang} />)
-  if (route.startsWith('#/player')) return sub(<Player lang={lang} />)
+  const rt = route.toLowerCase() // case-insensitive, jate #/Sponsors ba #/Representatives o kaj kore
+  if (rt.startsWith('#/admin')) return <><Live /><Suspense fallback={null}><Admin /></Suspense></>
+  if (rt.startsWith('#/sponsors')) return sub(<Sponsors lang={lang} />)
+  if (rt.startsWith('#/routes')) return sub(<Routes lang={lang} />)
+  if (rt.startsWith('#/schedule')) return sub(<Schedule lang={lang} />)
+  if (rt.startsWith('#/vote')) return sub(<Vote lang={lang} />)
+  if (rt.startsWith('#/reps')) return sub(<Reps lang={lang} />)
+  if (rt.startsWith('#/player')) return sub(<Player lang={lang} />)
+  if (rt.startsWith('#/parikroma')) return sub(<Parikroma lang={lang} />)
 
   const nm = (m) => (lang === 'bn' && m.name_bn ? m.name_bn : m.name)
   const areas = [...new Set(mandaps.map((m) => m.area).filter(Boolean))]
   let list = mandaps.filter((m) => (!area || m.area === area) && (!q || (m.name + (m.name_bn || '') + (m.address || '')).toLowerCase().includes(q.toLowerCase())))
   if (me) list = [...list].sort((a, b) => hav(me, a) - hav(me, b))
 
-  const choose = (m) => { setSuggest(false); setSel(m); setFocus({ lat: m.lat, lng: m.lng }) }
+  const choose = (m) => {
+    setSuggest(false); setSel(m)
+    setFocus({ id: m.id, lat: m.lat, lng: m.lng, zoom: 17, ts: Date.now() }) // zoom + ts: ekই mandap e abar click korleo trigger hobe
+    // mobile e list er upor map thake, tai map er dike scroll
+    document.querySelector('.map')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
   const nearMe = () => navigator.geolocation.getCurrentPosition((p) => {
     const pos = { lat: p.coords.latitude, lng: p.coords.longitude }; setMe(pos); setFocus(pos)
   }, () => alert('Location permission dao'))

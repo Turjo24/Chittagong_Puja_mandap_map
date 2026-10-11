@@ -8,6 +8,7 @@ const L = [
   ['#/reps', 'Representatives', 'প্রতিনিধি'],
   ['#/sponsors', 'Sponsors', 'স্পনসর'],
   ['#/player', 'Pujo Song', 'পূজার গান'],
+  ['#/parikroma', 'Parikrama', 'পারিক্রমা']
 ]
 
 export default function Nav({

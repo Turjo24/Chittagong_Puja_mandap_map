@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react'
 import { sb } from './supabase'
 import { check, uploadAll } from './upload'
 import { C } from './adminUi'
+import EditCard from './EditCard'
 
 const E = { from_place: '', to_place: '', mandap_id: '', mode: 'cng', fare: '', note: '' }
+const MODES = [['cng', 'CNG'], ['bus', 'Bus'], ['rickshaw', 'Rickshaw'], ['ride', 'Pathao/Uber'], ['other', 'Other']]
+
 export default function More({ page }) {
   const [csv, setCsv] = useState(''), [bm, setBm] = useState(''), [msg, setMsg] = useState('')
   const [pr, setPr] = useState([]), [pf, setPf] = useState([]), [routes, setRoutes] = useState([]), [ms, setMs] = useState([])
@@ -49,9 +52,9 @@ export default function More({ page }) {
     setR(E); load()
   }
   const addFare = async (x) => { const v = nf[x.id]; if (v === undefined || v === '') return; await sb.from('route_fares').insert({ route_id: x.id, fare: +v, status: 'approved', suggested_by: 'admin' }); setNf({ ...nf, [x.id]: '' }); load() }
-  const delRoute = async (x) => { await sb.from('routes').delete().eq('id', x.id); load() }
+  const delRoute = async (x) => { if (!confirm(`"${x.from_place} → ${x.to_place}" delete korben?`)) return; await sb.from('routes').delete().eq('id', x.id); load() }
   const addSch = async (e) => { e.preventDefault(); await sb.from('schedule').insert(s); setS({ title: '', title_bn: '', day: '', note: '' }); load() }
-  const delSch = async (x) => { await sb.from('schedule').delete().eq('id', x.id); load() }
+  const delSch = async (x) => { if (!confirm(`"${x.title}" delete korben?`)) return; await sb.from('schedule').delete().eq('id', x.id); load() }
   async function addRep(e) {
     e.preventDefault(); const f = e.currentTarget; setMsg('')
     try {
@@ -62,7 +65,11 @@ export default function More({ page }) {
       setP({ name: '', role: '', mandap_name: '', contact: '' }); setPic(null); f.reset(); load()
     } catch (x) { setMsg(x.message) }
   }
-  const delRep = async (x) => { if (x.photo_path) await sb.storage.from('photos').remove([x.photo_path]); await sb.from('reps').delete().eq('id', x.id); load() }
+  const delRep = async (x) => {
+    if (!confirm(`"${x.name}" delete korben?`)) return
+    if (x.photo_path) await sb.storage.from('photos').remove([x.photo_path])
+    await sb.from('reps').delete().eq('id', x.id); load()
+  }
   const cur = (x) => (x.route_fares || []).filter((f) => f.status === 'approved').sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]?.fare
 
   return (
@@ -100,7 +107,7 @@ export default function More({ page }) {
           <input className={C.input} required placeholder="From" value={r.from_place} onChange={(e) => setR({ ...r, from_place: e.target.value })} />
           <select className={C.input} value={r.mandap_id} onChange={(e) => setR({ ...r, mandap_id: e.target.value })}><option value="">To mandap (optional)</option>{ms.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</select>
           {!r.mandap_id && <input className={C.input} required placeholder="To (destination)" value={r.to_place} onChange={(e) => setR({ ...r, to_place: e.target.value })} />}
-          <select className={C.input} value={r.mode} onChange={(e) => setR({ ...r, mode: e.target.value })}><option value="cng">CNG</option><option value="bus">Bus</option><option value="rickshaw">Rickshaw</option><option value="ride">Pathao/Uber</option><option value="other">Other</option></select>
+          <select className={C.input} value={r.mode} onChange={(e) => setR({ ...r, mode: e.target.value })}>{MODES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
           <input className={C.input} required type="number" min="0" placeholder="Fare (BDT)" value={r.fare} onChange={(e) => setR({ ...r, fare: e.target.value })} />
           <input className={C.input} placeholder="Note" value={r.note} onChange={(e) => setR({ ...r, note: e.target.value })} />
           <div><button className={C.pri}>Add route</button></div>
@@ -108,11 +115,23 @@ export default function More({ page }) {
         </form>
         <div className={C.list}>
           {routes.map((x) => (
-            <div className={C.card} key={x.id}>
+            <EditCard
+              key={x.id}
+              table="routes"
+              item={x}
+              onSaved={load}
+              onDelete={() => delRoute(x)}
+              actions={<button className={C.pri} onClick={() => addFare(x)}>Update fare</button>}
+              fields={[
+                { key: 'from_place', label: 'From', required: true },
+                { key: 'to_place', label: 'To', required: true },
+                { key: 'mode', label: 'Mode', type: 'select', options: MODES },
+                { key: 'note', label: 'Note' }
+              ]}
+            >
               <div className="flex-1 min-w-40"><span className={C.name}>{x.from_place} → {x.to_place}</span> <span className={C.muted}>· {x.mode} · now ৳{cur(x) ?? '—'}</span></div>
               <input className={`${C.input} !w-28`} type="number" placeholder="new fare" value={nf[x.id] ?? ''} onChange={(e) => setNf({ ...nf, [x.id]: e.target.value })} />
-              <div className={C.acts}><button className={C.pri} onClick={() => addFare(x)}>Update fare</button><button className={C.danger} onClick={() => delRoute(x)}>✕</button></div>
-            </div>
+            </EditCard>
           ))}
         </div>
       </>}
@@ -127,7 +146,23 @@ export default function More({ page }) {
           <div><button className={C.pri}>Add</button></div>
         </form>
         <div className={C.list}>
-          {sch.map((x) => <div className={C.card} key={x.id}><div className="flex-1 min-w-40"><div className={C.name}>{x.title} <span className="font-normal text-[var(--mu)]">· {x.day}</span></div><div className={C.muted}>{x.note}</div></div><button className={C.danger} onClick={() => delSch(x)}>✕</button></div>)}
+          {sch.map((x) => (
+            <EditCard
+              key={x.id}
+              table="schedule"
+              item={x}
+              onSaved={load}
+              onDelete={() => delSch(x)}
+              fields={[
+                { key: 'title', label: 'Title', required: true },
+                { key: 'title_bn', label: 'Bangla title' },
+                { key: 'day', label: 'Date', type: 'date', required: true },
+                { key: 'note', label: 'Note' }
+              ]}
+            >
+              <div className="flex-1 min-w-40"><div className={C.name}>{x.title} <span className="font-normal text-[var(--mu)]">· {x.day}</span></div><div className={C.muted}>{x.note}</div></div>
+            </EditCard>
+          ))}
         </div>
       </>}
 
@@ -143,7 +178,25 @@ export default function More({ page }) {
           {msg && <p className={C.msg}>{msg}</p>}
         </form>
         <div className={C.list}>
-          {reps.map((x) => <div className={C.card} key={x.id}>{x.photo_url && <img className="w-16 h-16 rounded-full object-cover" src={x.photo_url} />}<div className="flex-1 min-w-40"><div className={C.name}>{x.name} <span className="font-normal text-[var(--mu)]">· {x.role}</span></div><div className={C.muted}>{x.mandap_name}</div></div><button className={C.danger} onClick={() => delRep(x)}>✕</button></div>)}
+          {reps.map((x) => (
+            <EditCard
+              key={x.id}
+              table="reps"
+              item={x}
+              onSaved={load}
+              onDelete={() => delRep(x)}
+              imageField={{ url: 'photo_url', path: 'photo_path', label: 'Photo' }}
+              fields={[
+                { key: 'name', label: 'Name', required: true },
+                { key: 'role', label: 'Role' },
+                { key: 'mandap_name', label: 'Mandap name' },
+                { key: 'contact', label: 'Contact (public hobe)' }
+              ]}
+            >
+              {x.photo_url && <img className="w-16 h-16 rounded-full object-cover" src={x.photo_url} />}
+              <div className="flex-1 min-w-40"><div className={C.name}>{x.name} <span className="font-normal text-[var(--mu)]">· {x.role}</span></div><div className={C.muted}>{x.mandap_name}</div></div>
+            </EditCard>
+          ))}
         </div>
       </>}
     </>

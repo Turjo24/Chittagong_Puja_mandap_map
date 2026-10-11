@@ -218,3 +218,4 @@ form.rc{display:grid;gap:10px}
   0%   { box-shadow: 0 0 0 0 rgba(225, 29, 72, .5); }
   100% { box-shadow: 0 0 0 14px rgba(225, 29, 72, 0); }
 }
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));

@@ -24,10 +24,17 @@ export default function Reps({ lang }) {
       .then(({ data }) => setList(data || []))
   }, [])
 
+  // Shared link e ashle oi card e scroll kore highlight
+  const sharedId = new URLSearchParams(window.location.hash.split('?')[1] || '').get('id')
+  useEffect(() => {
+    if (!list || !sharedId) return
+    document.getElementById(`rep-${sharedId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [list, sharedId])
+
   // Share URL
   const getShareUrl = (r) => {
     const base = window.location.href.split('#')[0]
-    return `${base}#/Representatives?id=${encodeURIComponent(r.id)}`
+    return `${base}#/reps?id=${encodeURIComponent(r.id)}`
   }
 
   const getShareText = (r) =>
@@ -157,7 +164,9 @@ export default function Reps({ lang }) {
             {list.map((r) => (
               <article
                 key={r.id}
-                className="
+                id={`rep-${r.id}`}
+                className={`${String(r.id) === sharedId ? 'ring-2 ring-[#c49a48] ' : ''}
+
                   group relative flex flex-col items-center
                   text-center rounded-2xl p-6
                   border border-[#e5d5b2]
@@ -173,7 +182,7 @@ export default function Reps({ lang }) {
                   dark:text-[#fff4df]
                   dark:shadow-black/20
                   dark:hover:border-[#d4af62]
-                "
+                `}
               >
 
                 {/* Decorative top line */}

@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import { sb } from './supabase'
 import { check, uploadAll } from './upload'
 import { C } from './adminUi'
+import EditCard from './EditCard'
+
+const TIERS = [['title', 'Title Sponsor'], ['gold', 'Gold'], ['silver', 'Silver'], ['supporter', 'Supporter']]
 
 export default function Extras({ page }) {
   const [notices, setNotices] = useState([]), [sp, setSp] = useState([])
@@ -13,7 +16,7 @@ export default function Extras({ page }) {
   }
   useEffect(() => { load() }, [])
   const postN = async (e) => { e.preventDefault(); await sb.from('notices').insert(n); setN({ title: '', body: '' }); load() }
-  const delN = async (id) => { await sb.from('notices').delete().eq('id', id); load() }
+  const delN = async (id) => { if (!confirm('Notice ta delete korben?')) return; await sb.from('notices').delete().eq('id', id); load() }
   async function addS(e) {
     e.preventDefault(); const f = e.currentTarget; setMsg('')
     try {
@@ -24,7 +27,11 @@ export default function Extras({ page }) {
       setS({ name: '', tier: 'gold', tagline: '', link: '' }); setLogo(null); f.reset(); load()
     } catch (x) { setMsg(x.message) }
   }
-  const delS = async (x) => { if (x.logo_path) await sb.storage.from('photos').remove([x.logo_path]); await sb.from('sponsors').delete().eq('id', x.id); load() }
+  const delS = async (x) => {
+    if (!confirm(`"${x.name}" delete korben?`)) return
+    if (x.logo_path) await sb.storage.from('photos').remove([x.logo_path])
+    await sb.from('sponsors').delete().eq('id', x.id); load()
+  }
 
   return (
     <>
@@ -37,10 +44,19 @@ export default function Extras({ page }) {
         </form>
         <div className={C.list}>
           {notices.map((x) => (
-            <div className={C.card} key={x.id}>
+            <EditCard
+              key={x.id}
+              table="notices"
+              item={x}
+              onSaved={load}
+              onDelete={() => delN(x.id)}
+              fields={[
+                { key: 'title', label: 'Title', required: true },
+                { key: 'body', label: 'Details', type: 'textarea' }
+              ]}
+            >
               <div className="flex-1 min-w-40"><div className={C.name}>{x.title}</div><div className={C.muted}>{x.body}</div></div>
-              <button className={C.danger} onClick={() => delN(x.id)}>✕ Delete</button>
-            </div>
+            </EditCard>
           ))}
         </div>
       </>}
@@ -50,7 +66,7 @@ export default function Extras({ page }) {
         <form onSubmit={addS} className={C.form}>
           <input className={C.input} required placeholder="Sponsor name" value={s.name} onChange={(e) => setS({ ...s, name: e.target.value })} />
           <select className={C.input} value={s.tier} onChange={(e) => setS({ ...s, tier: e.target.value })}>
-            <option value="title">Title Sponsor</option><option value="gold">Gold</option><option value="silver">Silver</option><option value="supporter">Supporter</option>
+            {TIERS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
           <input className={C.input} placeholder="Tagline (optional)" value={s.tagline} onChange={(e) => setS({ ...s, tagline: e.target.value })} />
           <input className={C.input} placeholder="Website link (optional)" value={s.link} onChange={(e) => setS({ ...s, link: e.target.value })} />
@@ -60,11 +76,23 @@ export default function Extras({ page }) {
         </form>
         <div className={C.list}>
           {sp.map((x) => (
-            <div className={C.card} key={x.id}>
+            <EditCard
+              key={x.id}
+              table="sponsors"
+              item={x}
+              onSaved={load}
+              onDelete={() => delS(x)}
+              imageField={{ url: 'logo_url', path: 'logo_path', label: 'Logo', arg: true }}
+              fields={[
+                { key: 'name', label: 'Sponsor name', required: true },
+                { key: 'tier', label: 'Tier', type: 'select', options: TIERS },
+                { key: 'tagline', label: 'Tagline' },
+                { key: 'link', label: 'Website link' }
+              ]}
+            >
               {x.logo_url && <img className={`${C.img} object-contain`} src={x.logo_url} />}
               <div className="flex-1 min-w-40"><div className={C.name}>{x.name} <span className="font-normal text-[var(--mu)]">· {x.tier}</span></div><div className={C.muted}>{x.tagline}</div></div>
-              <button className={C.danger} onClick={() => delS(x)}>✕ Delete</button>
-            </div>
+            </EditCard>
           ))}
         </div>
       </>}

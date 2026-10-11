@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { sb } from './supabase'
 import { C } from './adminUi'
 import { parseMapsUrl } from './parseMapsUrl'
+import EditCard from './EditCard'
 
 // Bulk add e jei value gulo default hisebe jabe (existing mandap er moto).
 // Table e theme/artist nullable hole ekhane null kore dite paro.
@@ -16,6 +17,18 @@ const validNum = (v, min, max) => {
 // ~30 meter er moddhe thakle same jaygar mandap dhora hoy
 const near = (aLat, aLng, bLat, bLng) =>
   Math.abs(aLat - bLat) < 0.0003 && Math.abs(aLng - bLng) < 0.0003
+
+// Edit form er field list (lat/lng o edit kora jabe)
+const EDIT_FIELDS = [
+  { key: 'name', label: 'Name', required: true },
+  { key: 'area', label: 'Area', nullable: true },
+  { key: 'address', label: 'Address', nullable: true },
+  { key: 'theme', label: 'Theme' },
+  { key: 'artist', label: 'Artist' },
+  { key: 'lat', label: 'Latitude', type: 'number', required: true },
+  { key: 'lng', label: 'Longitude', type: 'number', required: true },
+  { key: 'status', label: 'Status', type: 'select', options: [['approved', 'approved'], ['pending', 'pending']] }
+]
 
 export default function AllMandaps() {
   const [list, setList] = useState([]), [q, setQ] = useState(''), [msg, setMsg] = useState('')
@@ -182,14 +195,20 @@ export default function AllMandaps() {
       {!shown.length && <p className={C.muted}>Kichu nai.</p>}
       <div className={C.list}>
         {shown.map((m) => (
-          <div className={C.card} key={m.id}>
+          <EditCard
+            key={m.id}
+            table="mandaps"
+            item={m}
+            fields={EDIT_FIELDS}
+            onSaved={load}
+            onDelete={() => del(m)}
+          >
             <div className="flex-1 min-w-40">
               <div className={C.name}>{m.name} <span className="font-normal text-[var(--mu)]">· {m.area}</span>
                 <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${m.status === 'approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{m.status}</span></div>
               <div className={C.muted}>{m.address} {m.theme && `· ${m.theme}`} {m.artist && `· ${m.artist}`}</div>
             </div>
-            <button className={C.danger} onClick={() => del(m)}>✕ Delete</button>
-          </div>
+          </EditCard>
         ))}
       </div>
     </>
