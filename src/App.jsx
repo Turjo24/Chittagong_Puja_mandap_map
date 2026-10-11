@@ -9,6 +9,7 @@ import Bell from './Bell'
 import Nav from './Nav'
 import Live from './Live'
 import Flame from './Flame'
+import About from './About'
 import { T } from './i18n'
 import './styles.css'
 const Admin = lazy(() => import('./Admin'))
@@ -62,6 +63,7 @@ export default function App() {
   if (rt.startsWith('#/reps')) return sub(<Reps lang={lang} />)
   if (rt.startsWith('#/player')) return sub(<Player lang={lang} />)
   if (rt.startsWith('#/parikroma')) return sub(<Parikroma lang={lang} />)
+  if (rt.startsWith('#/about')) return sub(<About lang={lang} />)
 
   const nm = (m) => (lang === 'bn' && m.name_bn ? m.name_bn : m.name)
   const areas = [...new Set(mandaps.map((m) => m.area).filter(Boolean))]
