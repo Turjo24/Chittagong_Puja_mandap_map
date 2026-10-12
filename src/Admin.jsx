@@ -6,6 +6,7 @@ import More from './AdminMore'
 import AllMandaps from './AdminMandaps'
 import Emails from './AdminEmails'
 import Parikroma from './AdminParikroma'
+import Vote from './AdminVote'
 import { enableSound, ting, toast } from './alerts'
 import { C, theme } from './adminUi'
 
@@ -59,6 +60,7 @@ function Dash() {
     ['sponsors', '⭐ Sponsors'],
     ['reps', '👤 Representatives'],
     ['parikromas', '🕉 Parikrama'],
+    ['vote', '🔥 Vote'],
   ]
   useEffect(() => {
     load()
@@ -192,6 +194,7 @@ function Dash() {
           {page === 'mandaps' && <AllMandaps />}
           {page === 'emails' && <Emails />}
 {page === 'parikromas' && <Parikroma />}
+{page === 'vote' && <Vote />}
         </main>
       </div>
     </div>
