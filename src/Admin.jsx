@@ -7,6 +7,7 @@ import AllMandaps from './AdminMandaps'
 import Emails from './AdminEmails'
 import Parikroma from './AdminParikroma'
 import Vote from './AdminVote'
+import VoteCharts from './VoteCharts'
 import { enableSound, ting, toast } from './alerts'
 import { C, theme } from './adminUi'
 
@@ -145,6 +146,9 @@ function Dash() {
                 </div>
               ))}
             </div>
+
+            <div className={C.sec}>🔥 Vote results</div>
+            <VoteCharts compact />
 
             <div className={C.sec}>New mandap requests</div>
             {!mandaps.length && <p className={C.muted}>Kichu nai.</p>}

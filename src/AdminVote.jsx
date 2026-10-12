@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { sb } from './supabase'
+import VoteCharts from './VoteCharts'
 
 // ASSUMED schema: table `votes` (id, voter_key, email, mandap_id, created_at) — one row per picked mandap.
 // Admin access should be enforced by RLS / admin-only RPC on the Supabase side.
@@ -83,7 +84,8 @@ export default function AdminVote() {
 
   return (
     <div className="page"><div className="wrap">
-      <h2 className="title">Voters ({voters.length})</h2>
+      <VoteCharts />
+      <h2 className="title" style={{ marginTop: 24 }}>Voters ({voters.length})</h2>
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         <input placeholder="Email search..." value={q} onChange={(e) => setQ(e.target.value)} />
         <button className="btn pri" onClick={() => setEdit({ oldEmail: '', email: '', pick: [] })}>+ Add voter</button>
