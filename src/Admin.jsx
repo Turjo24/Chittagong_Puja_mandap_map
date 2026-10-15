@@ -8,6 +8,7 @@ import Emails from './AdminEmails'
 import Parikroma from './AdminParikroma'
 import Vote from './AdminVote'
 import VoteCharts from './VoteCharts'
+import Blog from './AdminBlog'
 import { enableSound, ting, toast } from './alerts'
 import { C, theme } from './adminUi'
 
@@ -62,6 +63,7 @@ function Dash() {
     ['reps', '👤 Representatives'],
     ['parikromas', '🕉 Parikrama'],
     ['vote', '🔥 Vote'],
+    ['blog', '📝 Blog'],
   ]
   useEffect(() => {
     load()
@@ -199,6 +201,8 @@ function Dash() {
           {page === 'emails' && <Emails />}
 {page === 'parikromas' && <Parikroma />}
 {page === 'vote' && <Vote />}
+{page === 'blog' && <Blog />}
+
         </main>
       </div>
     </div>

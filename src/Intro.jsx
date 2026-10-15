@@ -277,7 +277,7 @@ export default function Intro({ ready, t, onEnter, onDone }) {
             sm:text-4xl
           "
         >
-          দুর্গা মাই কি জয়
+          বলো দুর্গা মাঈকী জয়
         </h1>
 
         <p

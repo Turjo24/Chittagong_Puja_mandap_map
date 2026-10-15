@@ -20,6 +20,9 @@ const Vote = lazy(() => import('./Vote'))
 const Routes = lazy(() => import('./Routes'))
 const Reps = lazy(() => import('./Reps'))
 const Parikroma = lazy(() => import('./Parikroma'))
+const Blog = lazy(() => import('./Blog'))
+const SubmitBlog = lazy(() => import('./SubmitBlog'))
+const MapPage = lazy(() => import('./MapPage'))
 const hav = (a, b) => {
   const r = (x) => (x * Math.PI) / 180, dLat = r(b.lat - a.lat), dLng = r(b.lng - a.lng)
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dLng / 2) ** 2
@@ -66,6 +69,9 @@ export default function App() {
   if (rt.startsWith('#/parikroma')) return sub(<Parikroma lang={lang} />)
   if (rt.startsWith('#/about')) return sub(<About lang={lang} />)
   if (rt.startsWith('#/tutorial')) return sub(<Tutorial lang={lang} />)
+  if (rt.startsWith('#/blog-submit')) return sub(<SubmitBlog lang={lang} />) // '#/blog' er age thakte hobe
+  if (rt.startsWith('#/blog')) return sub(<Blog lang={lang} />)
+  if (rt.startsWith('#/zones')) return sub(<MapPage lang={lang} />)
 
   const nm = (m) => (lang === 'bn' && m.name_bn ? m.name_bn : m.name)
   const areas = [...new Set(mandaps.map((m) => m.area).filter(Boolean))]

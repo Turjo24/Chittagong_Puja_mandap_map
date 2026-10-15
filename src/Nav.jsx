@@ -10,7 +10,10 @@ const L = [
   ['#/player', 'Pujo Song', 'পূজার গান'],
   ['#/parikroma', 'Parikrama', 'পরিক্রমা'],
   ['#/about', 'About', 'সম্পর্কে'],
-  ['#/tutorial', 'Tutorial', 'টিউটোরিয়াল']
+  ['#/tutorial', 'Tutorial', 'টিউটোরিয়াল'],
+  ['#/blog', 'Blog', 'ব্লগ'],
+  ['#/zones', 'Zones', 'জোন']
+  
 ]
 
 export default function Nav({
