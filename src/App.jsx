@@ -75,7 +75,28 @@ export default function App() {
 
   const nm = (m) => (lang === 'bn' && m.name_bn ? m.name_bn : m.name)
   const areas = [...new Set(mandaps.map((m) => m.area).filter(Boolean))]
-  let list = mandaps.filter((m) => (!area || m.area === area) && (!q || (m.name + (m.name_bn || '') + (m.address || '')).toLowerCase().includes(q.toLowerCase())))
+  
+const searchText = q.trim().toLowerCase()
+
+let list = mandaps.filter((m) => {
+  const matchesArea = !area || m.area === area
+
+  const searchableText = [
+    m.name,
+    m.name_bn,
+    m.area,
+    m.address,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+
+  const matchesSearch =
+    !searchText || searchableText.includes(searchText)
+
+  return matchesArea && matchesSearch
+})
+
   if (me) list = [...list].sort((a, b) => hav(me, a) - hav(me, b))
 
   const choose = (m) => {

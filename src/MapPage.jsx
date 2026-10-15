@@ -51,6 +51,9 @@ const VW = 986, VH = 892, CW = 176, CH = 76, PAD = 22
 const MS = 620 / GEO.h
 const MX = (VW - GEO.w * MS) / 2, MY = 150
 
+// Mobile breakpoint (container width px)
+const BP = 720
+
 const ringsPath = (rings) =>
   rings.map((r) => {
     let d = 'M' + r[0] + ',' + r[1]
@@ -86,6 +89,10 @@ function divisionOf(lng, lat) {
 
 const cleanArea = (s) => (s || '').replace(/\s+/g, ' ').trim()
 
+// Prothom render e-i jeno mobile layout paay (desktop layout flash na kore)
+const initialNarrow = () =>
+  typeof window !== 'undefined' ? window.innerWidth < BP + 40 : false
+
 export default function MapPage({ lang = 'bn' }) {
   const t = L[lang] || L.bn
   const [rows, setRows] = useState(null)
@@ -93,7 +100,7 @@ export default function MapPage({ lang = 'bn' }) {
   const [sel, setSel] = useState(null)
   const [hov, setHov] = useState(null)
   const [q, setQ] = useState('')
-  const [narrow, setNarrow] = useState(false)
+  const [narrow, setNarrow] = useState(initialNarrow)
   const box = useRef(null)
 
   useEffect(() => {
@@ -103,12 +110,16 @@ export default function MapPage({ lang = 'bn' }) {
     })
   }, [])
 
+  // box ta data load howar por mount hoy, tai rows ke dependency rakha hoyeche
   useEffect(() => {
-    if (!box.current || typeof ResizeObserver === 'undefined') return
-    const ro = new ResizeObserver(([e]) => setNarrow(e.contentRect.width < 720))
-    ro.observe(box.current)
+    const el = box.current
+    if (!el) return
+    setNarrow(el.getBoundingClientRect().width < BP)
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(([e]) => setNarrow(e.contentRect.width < BP))
+    ro.observe(el)
     return () => ro.disconnect()
-  }, [])
+  }, [rows])
 
   const items = useMemo(
     () => (rows || []).map((m) => ({ ...m, div: divisionOf(Number(m.lng), Number(m.lat)) })),
@@ -160,15 +171,15 @@ export default function MapPage({ lang = 'bn' }) {
         onMouseEnter={() => setHov(n)}
         onMouseLeave={() => setHov(null)}
         style={{
-          cursor: 'pointer', boxSizing: 'border-box', borderRadius: 14, padding: '10px 14px',
+          cursor: 'pointer', boxSizing: 'border-box', borderRadius: 14, padding: '10px 14px', minWidth: 0,
           background: lit ? 'rgba(20,30,52,.95)' : 'rgba(13,20,36,.82)',
           border: `1px solid ${m.color}${lit ? '' : '99'}`,
           boxShadow: lit ? `0 0 18px ${m.color}66` : 'none',
           backdropFilter: 'blur(4px)', transition: 'all .15s', ...style
         }}
       >
-        <div style={{ fontWeight: 700, fontSize: '1.05em' }}>{dname(n)}</div>
-        <div style={{ opacity: 0.75, fontSize: '.9em', marginTop: 2 }}>{t.unit(counts[n])}</div>
+        <div style={{ fontWeight: 700, fontSize: '1.05em', overflowWrap: 'anywhere', lineHeight: 1.25 }}>{dname(n)}</div>
+        <div style={{ opacity: 0.75, fontSize: '.9em', marginTop: 2, overflowWrap: 'anywhere' }}>{t.unit(counts[n])}</div>
       </div>
     )
   }
@@ -176,7 +187,8 @@ export default function MapPage({ lang = 'bn' }) {
   const renderMap = (crop) => (
     <svg
       viewBox={crop ? `${MX - 30} ${MY - 20} ${GEO.w * MS + 60} ${GEO.h * MS + 40}` : `0 0 ${VW} ${VH}`}
-      style={crop ? { width: '100%', display: 'block' } : { position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+      style={crop ? { width: '100%', height: 'auto', display: 'block', maxHeight: '70vh' } : { position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+      preserveAspectRatio="xMidYMid meet"
     >
       <defs>
         <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
@@ -196,7 +208,8 @@ export default function MapPage({ lang = 'bn' }) {
               stroke="rgba(214,240,255,.9)"
               strokeWidth={0.55}
               strokeLinejoin="round"
-              filter="url(#glow)"
+              /* mobile e glow filter heavy, tai crop mode e bad */
+              filter={crop ? undefined : 'url(#glow)'}
               style={{ cursor: 'pointer', transition: 'fill-opacity .15s' }}
               onClick={() => pick(n)}
               onMouseEnter={() => setHov(n)}
@@ -209,7 +222,7 @@ export default function MapPage({ lang = 'bn' }) {
 
       {/* proti mandap er jayga */}
       {dots.map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r={1.5} fill="#fff" fillOpacity={0.9} style={{ pointerEvents: 'none' }} />
+        <circle key={i} cx={x} cy={y} r={crop ? 2.2 : 1.5} fill="#fff" fillOpacity={0.9} style={{ pointerEvents: 'none' }} />
       ))}
 
       {NAMES.map((n) => {
@@ -218,10 +231,10 @@ export default function MapPage({ lang = 'bn' }) {
         return (
           <g key={n} style={{ pointerEvents: 'none' }}>
             {!crop && <line x1={cp.ax} y1={cp.ay} x2={mx} y2={my} stroke={c} strokeOpacity={0.55} strokeWidth={1.2} />}
-            <circle cx={mx} cy={my} r={20} fill={c} fillOpacity={0.22} />
-            <circle cx={mx} cy={my} r={11} fill={c} fillOpacity={0.35} stroke="#fff" strokeWidth={3} />
+            <circle cx={mx} cy={my} r={crop ? 26 : 20} fill={c} fillOpacity={0.22} />
+            <circle cx={mx} cy={my} r={crop ? 15 : 11} fill={c} fillOpacity={0.35} stroke="#fff" strokeWidth={crop ? 2 : 3} />
             {crop && (
-              <text x={mx} y={my} textAnchor="middle" dominantBaseline="central" fontSize={13} fontWeight="700" fill="#fff">{counts[n]}</text>
+              <text x={mx} y={my} textAnchor="middle" dominantBaseline="central" fontSize={18} fontWeight="700" fill="#fff">{counts[n]}</text>
             )}
           </g>
         )
@@ -230,22 +243,22 @@ export default function MapPage({ lang = 'bn' }) {
   )
 
   return (
-    <div className="page">
+    <div className="page" style={{ boxSizing: 'border-box', maxWidth: '100%', overflowX: 'hidden' }}>
       <div
         ref={box}
         style={{
-          containerType: 'inline-size', position: 'relative', borderRadius: 24, overflow: 'hidden', color: '#fff',
-          border: '1px solid rgba(255,255,255,.12)',
+          containerType: 'inline-size', position: 'relative', borderRadius: narrow ? 18 : 24, overflow: 'hidden', color: '#fff',
+          border: '1px solid rgba(255,255,255,.12)', boxSizing: 'border-box', width: '100%',
           background: 'radial-gradient(ellipse at 50% 40%, #15233d 0%, #0b1220 70%)',
-          ...(narrow ? { padding: 14 } : { aspectRatio: `${VW}/${VH}` })
+          ...(narrow ? { padding: '14px 12px 16px' } : { aspectRatio: `${VW}/${VH}` })
         }}
       >
         {!narrow && renderMap(false)}
 
         {/* title */}
-        <div style={narrow ? { marginBottom: 8 } : { position: 'absolute', left: `${(PAD / VW) * 100}%`, top: '3.2%', width: '30%' }}>
-          <div style={{ fontSize: narrow ? 24 : 'clamp(18px, 3.4cqw, 40px)', fontWeight: 800, lineHeight: 1.12 }}>{t.title}</div>
-          <div style={{ fontSize: narrow ? 13 : 'clamp(11px, 1.35cqw, 15px)', opacity: 0.7, marginTop: 8 }}>{t.total}: {t.unit(rows.length)}</div>
+        <div style={narrow ? { marginBottom: 6 } : { position: 'absolute', left: `${(PAD / VW) * 100}%`, top: '3.2%', width: '30%' }}>
+          <div style={{ fontSize: narrow ? 'clamp(20px, 6vw, 26px)' : 'clamp(18px, 3.4cqw, 40px)', fontWeight: 800, lineHeight: 1.18, overflowWrap: 'anywhere' }}>{t.title}</div>
+          <div style={{ fontSize: narrow ? 13 : 'clamp(11px, 1.35cqw, 15px)', opacity: 0.7, marginTop: 6 }}>{t.total}: {t.unit(rows.length)}</div>
         </div>
 
         {/* desktop: callout card */}
@@ -262,38 +275,59 @@ export default function MapPage({ lang = 'bn' }) {
         {narrow && (
           <>
             {renderMap(true)}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 10 }}>
-              {NAMES.map((n) => card(n, { fontSize: 14 }))}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8, marginTop: 8 }}>
+              {NAMES.map((n) => card(n, { fontSize: 14, padding: '9px 11px' }))}
             </div>
           </>
         )}
 
-        <div style={{ position: narrow ? 'static' : 'absolute', left: PAD, bottom: 18, marginTop: narrow ? 12 : 0, display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 999, background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.12)', fontSize: narrow ? 12 : 'clamp(10px, 1.3cqw, 13px)', opacity: 0.85 }}>
-          <span style={{ width: 8, height: 8, borderRadius: 99, background: '#34d399' }} />{t.live}
+        <div
+          style={{
+            position: narrow ? 'static' : 'absolute', left: PAD, bottom: 18, marginTop: narrow ? 12 : 0,
+            display: 'inline-flex', alignItems: 'center', gap: 8, padding: narrow ? '6px 12px' : '7px 14px', borderRadius: 999,
+            background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.12)',
+            fontSize: narrow ? 12 : 'clamp(10px, 1.3cqw, 13px)', opacity: 0.85, maxWidth: '100%', boxSizing: 'border-box'
+          }}
+        >
+          <span style={{ width: 8, height: 8, borderRadius: 99, background: '#34d399', flex: '0 0 auto' }} />{t.live}
         </div>
       </div>
       <p className="muted" style={{ fontSize: 12 }}>{t.credit}</p>
 
       {/* ---- full list ---- */}
-      <div className="sec" id="mandap-list" style={{ marginTop: 18 }}>
+      <div className="sec" id="mandap-list" style={{ marginTop: 18, scrollMarginTop: 72 }}>
         {t.all} ({shown.length}/{rows.length}){sel !== null && <> · {dname(sel)}</>}
       </div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
-        <input style={{ flex: 1, minWidth: 220 }} placeholder={'🔍 ' + t.search} value={q} onChange={(e) => setQ(e.target.value)} />
+        <input
+          style={{ flex: '1 1 200px', minWidth: 0, boxSizing: 'border-box', fontSize: 16 }}
+          placeholder={'🔍 ' + t.search}
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
         {sel !== null && <button className="btn" onClick={() => setSel(null)}>✕ {t.showAll}</button>}
       </div>
       {!shown.length && <p className="muted">{t.none}</p>}
       {shown.map((m) => (
-        <div className="card" key={m.id} style={{ cursor: 'default' }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <h4 style={{ margin: 0 }}>{nm(m)}</h4>
-            <small>
+        <div
+          className="card"
+          key={m.id}
+          style={{ cursor: 'default', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', boxSizing: 'border-box', maxWidth: '100%' }}
+        >
+          <div style={{ flex: '1 1 180px', minWidth: 0 }}>
+            <h4 style={{ margin: 0, overflowWrap: 'anywhere' }}>{nm(m)}</h4>
+            <small style={{ overflowWrap: 'anywhere' }}>
               {m.div && <span style={{ color: META[m.div].color, fontWeight: 600 }}>{dname(m.div)}</span>}
               {cleanArea(m.area) ? ` · ${cleanArea(m.area)}` : ''}{m.address ? ` · ${m.address}` : ''}
             </small>
           </div>
-          <a href={`https://www.google.com/maps/dir/?api=1&destination=${m.lat},${m.lng}`} target="_blank" rel="noreferrer">
-            <button className="btn">🧭 {t.dir}</button>
+          <a
+            href={`https://www.google.com/maps/dir/?api=1&destination=${m.lat},${m.lng}`}
+            target="_blank"
+            rel="noreferrer"
+            style={{ flex: '0 0 auto' }}
+          >
+            <button className="btn" style={{ whiteSpace: 'nowrap' }}>🧭 {t.dir}</button>
           </a>
         </div>
       ))}
