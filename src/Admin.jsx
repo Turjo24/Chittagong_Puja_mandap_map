@@ -9,17 +9,26 @@ import Parikroma from './AdminParikroma'
 import Vote from './AdminVote'
 import VoteCharts from './VoteCharts'
 import Blog from './AdminBlog'
+import Team from './AdminTeam'
+import { NAV } from './adminNav'
 import { enableSound, ting, toast } from './alerts'
 import { C, theme } from './adminUi'
 
 export default function Admin() {
   const [user, setUser] = useState(null), [ready, setReady] = useState(false)
+  const [role, setRole] = useState(undefined) // undefined = loading, null = kono access nai
   const [cred, setCred] = useState({ email: '', password: '' }), [err, setErr] = useState('')
   useEffect(() => {
     sb.auth.getSession().then(({ data }) => { setUser(data.session?.user || null); setReady(true) })
     const { data } = sb.auth.onAuthStateChange((_, s) => setUser(s?.user || null))
     return () => data.subscription.unsubscribe()
   }, [])
+  // login korle admin_roles theke role + perms ana
+  useEffect(() => {
+    if (!user) { setRole(undefined); return }
+    sb.from('admin_roles').select('role,perms').eq('user_id', user.id).maybeSingle()
+      .then(({ data }) => setRole(data || null))
+  }, [user])
   async function login(e) { e.preventDefault(); const { error } = await sb.auth.signInWithPassword(cred); setErr(error?.message || '') }
   if (!ready) return null
   if (!user) return (
@@ -37,10 +46,23 @@ export default function Admin() {
       </div>
     </div>
   )
-  return <Dash />
+  if (role === undefined) return null
+  if (role === null) return (
+    <div style={theme} className="min-h-screen bg-[var(--bg)] flex items-center justify-center p-4">
+      <div className="w-full max-w-sm bg-[var(--card)] border border-[var(--bd)] rounded-2xl shadow-sm p-6 text-center">
+        <h2 className={`${C.title} mb-2`}>Access nai</h2>
+        <p className={C.muted}>Ei account ke admin access deya hoyni. Main admin er sathe kotha bolun.</p>
+        <button className={`${C.btn} mt-4`} onClick={() => sb.auth.signOut()}>Logout</button>
+      </div>
+    </div>
+  )
+  return <Dash role={role} />
 }
 
-function Dash() {
+function Dash({ role }) {
+  const isSuper = role.role === 'super'
+  const allowed = NAV.filter(([k]) => (k === 'team' ? isSuper : isSuper || (role.perms || []).includes(k)))
+
   const [photos, setPhotos] = useState([]), [mandaps, setMandaps] = useState([]), [st, setSt] = useState({})
   const count = (tb, s) => sb.from(tb).select('*', { count: 'exact', head: true }).eq('status', s).then((r) => r.count || 0)
   async function load() {
@@ -50,21 +72,11 @@ function Dash() {
     setSt({ pp, ap, pm, am })
   }
   const [snd, setSnd] = useState(false)
-  const [page, setPage] = useState('dash')
+  const [pageSel, setPage] = useState(null)
+  // jei page er permission nai oita kokhono dekhabe na
+  const page = allowed.some((n) => n[0] === pageSel) ? pageSel : allowed[0]?.[0]
   const [open, setOpen] = useState(false)
-  const nav = [
-    ['dash', '📊 Dashboard'],
-    ['mandaps', '🛕 Mandaps'],
-    ['emails', '✉ User emails'],
-    ['routes', '🚌 Routes & fares'],
-    ['schedule', '📅 Schedule'],
-    ['notices', '🔔 Notices'],
-    ['sponsors', '⭐ Sponsors'],
-    ['reps', '👤 Representatives'],
-    ['parikromas', '🕉 Parikrama'],
-    ['vote', '🔥 Vote'],
-    ['blog', '📝 Blog'],
-  ]
+
   useEffect(() => {
     load()
     const say = (t, b) => { ting(); toast(t, b); load() }
@@ -98,7 +110,7 @@ function Dash() {
   const go = (k) => { setPage(k); setOpen(false) }
   const menu = (
     <div className="flex flex-col gap-1">
-      {nav.map(([k, l]) => (
+      {allowed.map(([k, l]) => (
         <button key={k} onClick={() => go(k)}
           className={`text-left px-3 py-2.5 rounded-lg text-sm transition cursor-pointer ${page === k ? 'bg-[var(--a)] text-white font-medium' : 'text-[var(--tx)] hover:bg-[var(--soft)]'}`}>{l}</button>
       ))}
@@ -109,7 +121,8 @@ function Dash() {
   )
 
   return (
-    <div style={theme} className="min-h-screen bg-[var(--bg)] text-[var(--tx)]">
+    // h-[100dvh] + overflow-hidden: pura page scroll hoy na. Sidebar sthir, sudhu <main> scroll hoy.
+    <div style={theme} className="h-[100dvh] overflow-hidden bg-[var(--bg)] text-[var(--tx)]">
       {/* Mobile drawer */}
       {open && (
         <div className="fixed inset-0 z-50 md:hidden">
@@ -124,20 +137,23 @@ function Dash() {
         </div>
       )}
 
-      <div className="max-w-6xl mx-auto px-4 pb-6 md:py-4 flex gap-5 items-start">
-        {/* Desktop sidebar */}
-        <aside className="hidden md:block w-56 shrink-0 sticky top-4 bg-[var(--card)] border border-[var(--bd)] rounded-2xl shadow-sm p-3">
-          <h3 className="px-2 pb-2 font-bold">🔥 Admin</h3>
+      <div className="h-full max-w-6xl mx-auto px-4 flex gap-5">
+        {/* Desktop sidebar: fixed height, nijer scroll */}
+        <aside className="hidden md:block w-56 shrink-0 self-start my-4 max-h-[calc(100dvh-2rem)] overflow-y-auto bg-[var(--card)] border border-[var(--bd)] rounded-2xl shadow-sm p-3">
+          <h3 className="px-2 pb-2 font-bold">🔥 Admin {!isSuper && <span className="text-xs font-normal text-[var(--mu)]">(sub)</span>}</h3>
           {menu}
         </aside>
 
-        <main className="flex-1 min-w-0">
-          <div className="sticky top-0 z-30 -mx-4 px-4 py-3 bg-[var(--bg)]/95 backdrop-blur md:static md:mx-0 md:px-0 md:bg-transparent flex items-center gap-3 mb-3">
+        {/* Content: sudhu eta scroll hoy */}
+        <main className="flex-1 min-w-0 h-full overflow-y-auto pb-6 md:py-4">
+          <div className="sticky top-0 z-30 py-3 bg-[var(--bg)]/95 backdrop-blur flex items-center gap-3 mb-3">
             <button onClick={() => setOpen(true)} aria-label="Open menu"
               className="md:hidden w-10 h-10 flex items-center justify-center rounded-lg border border-[var(--bd)] bg-[var(--card)] text-xl cursor-pointer">☰</button>
-            <h2 className={`${C.title} flex-1 truncate`}>{nav.find((n) => n[0] === page)[1]}</h2>
+            <h2 className={`${C.title} flex-1 truncate`}>{allowed.find((n) => n[0] === page)?.[1] || 'No access'}</h2>
             <button className={snd ? C.btn : C.pri} onClick={() => { enableSound(); ting(); setSnd(true) }}>{snd ? '🔊 ON' : '🔈 Sound'}</button>
           </div>
+
+          {!page && <p className={C.muted}>Apnar kono page er access nai. Main admin ke bolun.</p>}
 
           {page === 'dash' && <>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -199,10 +215,10 @@ function Dash() {
           <More page={page} />
           {page === 'mandaps' && <AllMandaps />}
           {page === 'emails' && <Emails />}
-{page === 'parikromas' && <Parikroma />}
-{page === 'vote' && <Vote />}
-{page === 'blog' && <Blog />}
-
+          {page === 'parikromas' && <Parikroma />}
+          {page === 'vote' && <Vote />}
+          {page === 'blog' && <Blog />}
+          {page === 'team' && isSuper && <Team />}
         </main>
       </div>
     </div>

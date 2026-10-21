@@ -3,6 +3,7 @@ import { sb } from './supabase'
 import { C } from './adminUi'
 import { parseMapsUrl } from './parseMapsUrl'
 import EditCard from './EditCard'
+import PhotoManager from './AdminPhotos'
 
 // Bulk add e jei value gulo default hisebe jabe (existing mandap er moto).
 // Table e theme/artist nullable hole ekhane null kore dite paro.
@@ -195,8 +196,8 @@ export default function AllMandaps() {
       {!shown.length && <p className={C.muted}>Kichu nai.</p>}
       <div className={C.list}>
         {shown.map((m) => (
+          <div key={m.id}>
           <EditCard
-            key={m.id}
             table="mandaps"
             item={m}
             fields={EDIT_FIELDS}
@@ -209,6 +210,8 @@ export default function AllMandaps() {
               <div className={C.muted}>{m.address} {m.theme && `· ${m.theme}`} {m.artist && `· ${m.artist}`}</div>
             </div>
           </EditCard>
+          <PhotoManager mandap={m} />
+          </div>
         ))}
       </div>
     </>

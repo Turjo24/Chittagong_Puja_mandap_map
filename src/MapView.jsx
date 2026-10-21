@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -47,6 +47,24 @@ function Fly({ to, onId }) {
   return null
 }
 
+// Share link (/?m=ID) diye ashle oi mandap e fly kore card khule dey (ekbar)
+function Deep({ items, onSelect, onId }) {
+  const m = useMap()
+  const done = useRef(false)
+  useEffect(() => {
+    if (done.current || !items.length) return
+    const id = new URLSearchParams(window.location.search).get('m')
+    if (!id) { done.current = true; return }
+    const it = items.find((x) => String(x.id) === id)
+    if (!it) return
+    done.current = true
+    m.flyTo([it.lat, it.lng], 16, { duration: 1.2 })
+    onId(it.id)
+    onSelect(it)
+  }, [items])
+  return null
+}
+
 function Pick({ on, onClear }) {
   useMapEvents({
     click: (e) => {
@@ -66,6 +84,7 @@ export default function MapView({ items, onSelect, focus, me, picked, onPick, da
       <MapContainer center={[22.3569, 91.7832]} zoom={12} style={{ height: '100%', width: '100%' }} zoomControl={false}>
         <TileLayer key={String(dark)} className={dark ? 'tiles-dark' : 'tiles-light'} url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={19} attribution="&copy; OpenStreetMap contributors" />
         <Fly to={focus} onId={setSelId} />
+        <Deep items={items} onSelect={onSelect} onId={setSelId} />
         <Pick on={onPick} onClear={() => setSelId(null)} />
         {items.map((m) => (
           <Marker
