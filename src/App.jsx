@@ -44,7 +44,7 @@ export default function App() {
 
   useEffect(() => { const f = () => setRoute(location.hash); addEventListener('hashchange', f); return () => removeEventListener('hashchange', f) }, [])
   useEffect(() => {
-    sb.from('mandaps').select('id,name,name_bn,area,address,lat,lng,theme,artist').eq('status', 'approved').then(({ data }) => { setMandaps(data || []); setLoaded(true) })
+    sb.from('mandaps').select('id,name,name_bn,area,address,lat,lng,theme,artist,areaeng').eq('status', 'approved').then(({ data }) => { setMandaps(data || []); setLoaded(true) })
     sb.from('photos').select('mandap_id,url').eq('status', 'approved').order('likes', { ascending: false }).then(({ data }) => {
       const c = {}; (data || []).forEach((p) => { if (!c[p.mandap_id]) c[p.mandap_id] = p.url }); setCovers(c)
     })
