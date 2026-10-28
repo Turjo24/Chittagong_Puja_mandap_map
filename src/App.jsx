@@ -43,12 +43,36 @@ export default function App() {
   const t = T[lang]
 
   useEffect(() => { const f = () => setRoute(location.hash); addEventListener('hashchange', f); return () => removeEventListener('hashchange', f) }, [])
+
   useEffect(() => {
-    sb.from('mandaps').select('id,name,name_bn,area,address,lat,lng,theme,artist,areaeng').eq('status', 'approved').then(({ data }) => { setMandaps(data || []); setLoaded(true) })
-    sb.from('photos').select('mandap_id,url').eq('status', 'approved').order('likes', { ascending: false }).then(({ data }) => {
-      const c = {}; (data || []).forEach((p) => { if (!c[p.mandap_id]) c[p.mandap_id] = p.url }); setCovers(c)
-    })
+    const load = async () => {
+      const { data, error } = await sb
+        .from('mandaps')
+        .select('id,name,name_bn,area,address,lat,lng,theme,artist,areaeng')
+        .eq('status', 'approved')
+
+      if (error) {
+        console.error('Supabase error:', error)
+      } else {
+        console.log('Mandaps data:', data)
+        setMandaps(data || [])
+      }
+      setLoaded(true) // error hole o intro atke thakbe na
+
+      const { data: ph, error: phErr } = await sb
+        .from('photos')
+        .select('mandap_id,url')
+        .eq('status', 'approved')
+        .order('likes', { ascending: false })
+
+      if (phErr) console.error('Photos error:', phErr)
+      const c = {}
+      ;(ph || []).forEach((p) => { if (!c[p.mandap_id]) c[p.mandap_id] = p.url })
+      setCovers(c)
+    }
+    load()
   }, [])
+
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? 'dark' : 'light'
     document.documentElement.classList.toggle('dark', dark) // Tailwind dark: variant er jonno
@@ -77,8 +101,8 @@ export default function App() {
 
   const nm = (m) => (lang === 'bn' && m.name_bn ? m.name_bn : m.name)
 
-  // bn hole area, en hole area_eng; na thakle onnotar fallback
-  const ar = (m) => (lang === 'bn' ? (m.area || m.areaeng) : (m.areaeng || m.area))
+  // bn hole area, en hole areaeng; na thakle onnotar fallback
+  const ar = (m) => (lang === 'bn' ? (m.areaeng || m.area) : (m.area|| m.areaeng))
 
   const areas = [...new Set(mandaps.map(ar).filter(Boolean))]
 
@@ -87,7 +111,7 @@ export default function App() {
   let list = mandaps.filter((m) => {
     const matchesArea = !area || ar(m) === area
 
-    const searchableText = [m.name, m.name_bn, m.area,m.areaeng, m.address]
+    const searchableText = [m.name, m.name_bn, m.area, m.areaeng, m.address]
       .filter(Boolean)
       .join(' ')
       .toLowerCase()
