@@ -56,6 +56,8 @@ export default function App() {
     localStorage.setItem('dark', dark ? '1' : '0')
   }, [dark])
   useEffect(() => { localStorage.setItem('lang', lang) }, [lang])
+  // language change hole selected area reset (nahole ager language er value diye filter hoye list faka hoy)
+  useEffect(() => { setArea('') }, [lang])
 
   const sub = (el) => <><Live /><Nav lang={lang} setLang={setLang} dark={dark} setDark={setDark} route={route} tools /><Suspense fallback={<div className="page" />}>{el}</Suspense></>
   const rt = route.toLowerCase() // case-insensitive, jate #/Sponsors ba #/Representatives o kaj kore
@@ -74,28 +76,26 @@ export default function App() {
   if (rt.startsWith('#/zones')) return sub(<MapPage lang={lang} />)
 
   const nm = (m) => (lang === 'bn' && m.name_bn ? m.name_bn : m.name)
-  const areas = [...new Set(mandaps.map((m) => m.area).filter(Boolean))]
-  
-const searchText = q.trim().toLowerCase()
 
-let list = mandaps.filter((m) => {
-  const matchesArea = !area || m.area === area
+  // bn hole area, en hole area_eng; na thakle onnotar fallback
+  const ar = (m) => (lang === 'bn' ? (m.area || m.areaeng) : (m.areaeng || m.area))
 
-  const searchableText = [
-    m.name,
-    m.name_bn,
-    m.area,
-    m.address,
-  ]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase()
+  const areas = [...new Set(mandaps.map(ar).filter(Boolean))]
 
-  const matchesSearch =
-    !searchText || searchableText.includes(searchText)
+  const searchText = q.trim().toLowerCase()
 
-  return matchesArea && matchesSearch
-})
+  let list = mandaps.filter((m) => {
+    const matchesArea = !area || ar(m) === area
+
+    const searchableText = [m.name, m.name_bn, m.area,m.areaeng, m.address]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+
+    const matchesSearch = !searchText || searchableText.includes(searchText)
+
+    return matchesArea && matchesSearch
+  })
 
   if (me) list = [...list].sort((a, b) => hav(me, a) - hav(me, b))
 
@@ -120,7 +120,7 @@ let list = mandaps.filter((m) => {
         </div>
         <div className="ctl">
           <input className="search" placeholder={t.search} value={q} onChange={(e) => setQ(e.target.value)} />
-          <select value={area} onChange={(e) => setArea(e.target.value)}><option value="">{t.all}</option>{areas.map((a) => <option key={a}>{a}</option>)}</select>
+          <select value={area} onChange={(e) => setArea(e.target.value)}><option value="">{t.all}</option>{areas.map((a) => <option key={a} value={a}>{a}</option>)}</select>
           <button className="btn" onClick={nearMe}>◎ {t.near}</button>
           <button className="btn pri" onClick={() => { setSel(null); setSuggest(true) }}>＋ {t.suggest}</button>
           <Bell lang={lang} t={t} />
@@ -135,13 +135,13 @@ let list = mandaps.filter((m) => {
           {list.map((m) => (
             <div className={'card' + (sel?.id === m.id ? ' on' : '')} key={m.id} onClick={() => choose(m)}>
               {covers[m.id] ? <img className="thumb" src={covers[m.id]} loading="lazy" /> : <div className="thumb"><Flame size={26} /></div>}
-              <div><h4>{nm(m)}</h4><small>{m.area}{me && ` · ${hav(me, m).toFixed(1)} ${t.away}`}</small></div>
+              <div><h4>{nm(m)}</h4><small>{ar(m)}{me && ` · ${hav(me, m).toFixed(1)} ${t.away}`}</small></div>
             </div>
           ))}
         </div>
         <div className="map">
           <MapView items={list} onSelect={choose} focus={focus} me={me} dark={dark} picked={suggest ? picked : null} onPick={suggest ? setPicked : null} />
-          
+
           {sel && <Panel m={sel} name={nm(sel)} t={t} onClose={() => setSel(null)} />}
           {suggest && <Suggest t={t} picked={picked} onClose={() => setSuggest(false)} />}
         </div>
