@@ -47,7 +47,7 @@ function Fly({ to, onId }) {
   return null
 }
 
-// Share link (/?m=ID) diye ashle oi mandap e fly kore card khule dey (ekbar)
+// Share link (/?m=slug ba /?m=ID) diye ashle oi mandap e fly kore card khule dey (ekbar)
 function Deep({ items, onSelect, onId }) {
   const m = useMap()
   const done = useRef(false)
@@ -55,7 +55,8 @@ function Deep({ items, onSelect, onId }) {
     if (done.current || !items.length) return
     const id = new URLSearchParams(window.location.search).get('m')
     if (!id) { done.current = true; return }
-    const it = items.find((x) => String(x.id) === id)
+    const key = id.toLowerCase()
+    const it = items.find((x) => String(x.id) === key || (x.slug && x.slug === key))
     if (!it) return
     done.current = true
     m.flyTo([it.lat, it.lng], 16, { duration: 1.2 })

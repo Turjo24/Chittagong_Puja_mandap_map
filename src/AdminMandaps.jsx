@@ -25,7 +25,15 @@ const EDIT_FIELDS = [
   { key: 'area', label: 'Area', nullable: true },
   { key: 'address', label: 'Address', nullable: true },
   { key: 'theme', label: 'Theme' },
-  { key: 'artist', label: 'Artist' },
+  { key: 'artist', label: 'Artist (shilpir naam)' },
+  { key: 'slug', label: 'Public link naam (a-z, 0-9, dash) — faka rakhle auto. Share korar pore bodlaben na', nullable: true },
+  { key: 'established_year', label: 'Protishtha sal (optional)', type: 'number', nullable: true },
+  { key: 'heritage_story', label: 'Heritage golpo / documentary (anuchchhed alada korte ekta faka line)', type: 'textarea', rows: 12, nullable: true },
+  { key: 'artist_bio', label: 'Shilpir porichoy', type: 'textarea', rows: 5, nullable: true },
+  { key: 'artist_albums', label: 'Shilpir kaj / album (prottek line e ekta)', type: 'textarea', rows: 5, nullable: true },
+  { key: 'entry_point', label: 'Entry point (probesh poth)', type: 'textarea', rows: 2, nullable: true },
+  { key: 'exit_point', label: 'Exit point (prosthan poth)', type: 'textarea', rows: 2, nullable: true },
+  { key: 'og_image', label: 'Share thumbnail (optional, full https link; faka thakle prothom photo)', nullable: true },
   { key: 'lat', label: 'Latitude', type: 'number', required: true },
   { key: 'lng', label: 'Longitude', type: 'number', required: true },
   { key: 'status', label: 'Status', type: 'select', options: [['approved', 'approved'], ['pending', 'pending']] }
@@ -208,6 +216,13 @@ export default function AllMandaps() {
               <div className={C.name}>{m.name} <span className="font-normal text-[var(--mu)]">· {m.area}</span>
                 <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${m.status === 'approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{m.status}</span></div>
               <div className={C.muted}>{m.address} {m.theme && `· ${m.theme}`} {m.artist && `· ${m.artist}`}</div>
+              {m.slug && (
+                <div className={C.muted}>
+                  Public link: <a href={`/m/${m.slug}`} target="_blank" rel="noreferrer">/m/{m.slug}</a>{' '}
+                  <button type="button" className="btn" onClick={() => navigator.clipboard?.writeText(`${location.origin}/m/${m.slug}`)}>Copy</button>
+                  {!m.heritage_story && ' · ⚠ heritage golpo nai'}
+                </div>
+              )}
             </div>
           </EditCard>
           <PhotoManager mandap={m} />

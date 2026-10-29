@@ -145,6 +145,18 @@ export default function Panel({ m, name, t, onClose }) {
             </button>
           </a>
 
+          {/* এখানে slug বাদ দিয়ে সরাসরি ?m=id ব্যবহার করা হয়েছে */}
+          <a
+            href={`/?m=${m.id}`}
+            target="_blank"
+            rel="noreferrer"
+            style={{ textDecoration: 'none' }}
+          >
+            <button type="button" className="btn">
+              🏛 ঐতিহ্য / Heritage
+            </button>
+          </a>
+
           <ShareButton m={m} />
         </div>
 

@@ -38,8 +38,8 @@ export default function App() {
   const [me, setMe] = useState(null)
   const [suggest, setSuggest] = useState(false), [picked, setPicked] = useState(null)
   const [route, setRoute] = useState(location.hash)
-  // Shared/deep links (#/reps?id=.., #/sponsors?id=..) e intro dekhabo na
-  const [loaded, setLoaded] = useState(false), [intro, setIntro] = useState(!sessionStorage.getItem('intro') && !/^#\/./.test(location.hash))
+  // Shared/deep links (#/reps?id=.., /?m=slug) e intro dekhabo na
+  const [loaded, setLoaded] = useState(false), [intro, setIntro] = useState(!sessionStorage.getItem('intro') && !/^#\/./.test(location.hash) && !new URLSearchParams(location.search).has('m'))
   const t = T[lang]
 
   useEffect(() => { const f = () => setRoute(location.hash); addEventListener('hashchange', f); return () => removeEventListener('hashchange', f) }, [])
@@ -48,7 +48,7 @@ export default function App() {
     const load = async () => {
       const { data, error } = await sb
         .from('mandaps')
-        .select('id,name,name_bn,area,address,lat,lng,theme,artist,areaeng')
+        .select('id,slug,name,name_bn,area,address,lat,lng,theme,artist,areaeng')
         .eq('status', 'approved')
 
       if (error) {
@@ -57,6 +57,16 @@ export default function App() {
         console.log('Mandaps data:', data)
         setMandaps(data || [])
       }
+
+      const urlParams = new URLSearchParams(window.location.search)
+        const mParam = urlParams.get('m')
+        if (mParam && data) {
+          const target = data.find(x => x.slug === mParam || x.id == mParam)
+          if (target) {
+            setSel(target)
+            setFocus({ id: target.id, lat: target.lat, lng: target.lng, zoom: 17, ts: Date.now() })
+          }
+        }
       setLoaded(true) // error hole o intro atke thakbe na
 
       const { data: ph, error: phErr } = await sb

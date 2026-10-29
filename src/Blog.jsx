@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { sb } from './supabase'
+import ShareButton from './ShareButton'
 
 const L = {
   bn: {
@@ -184,6 +185,8 @@ export default function Blog({ lang = 'bn' }) {
             {p}
           </p>
         ))}
+
+        <ShareButton m={post} kind="b" title={post.title} />
       </div>
     )
   }

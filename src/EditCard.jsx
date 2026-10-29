@@ -82,7 +82,7 @@ export default function EditCard({ table, item, fields, imageField, onSaved, onD
             <label key={f.key} className="flex flex-col gap-1 text-xs opacity-90">
               {f.label || f.key}
               {f.type === 'textarea' ? (
-                <textarea className={C.input} rows={3} value={d[f.key]} onChange={(e) => setD({ ...d, [f.key]: e.target.value })} />
+                <textarea className={C.input} rows={f.rows || 3} value={d[f.key]} onChange={(e) => setD({ ...d, [f.key]: e.target.value })} />
               ) : f.type === 'select' ? (
                 <select className={C.input} value={d[f.key]} onChange={(e) => setD({ ...d, [f.key]: e.target.value })}>
                   {f.options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}

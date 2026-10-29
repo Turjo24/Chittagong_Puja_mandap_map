@@ -84,9 +84,9 @@ export default function AdminBlog() {
 
   // ---- published post edit / delete ----
   async function savePost() {
-    const { id, title, content, author_name } = editing
+    const { id, title, content, author_name, slug } = editing
     if (!title.trim() || !content.trim()) return setMsg('Title ar details dorkar.')
-    const { error } = await sb.from('blog_posts').update({ title: title.trim(), content: content.trim(), author_name: (author_name || '').trim() || null }).eq('id', id)
+    const { error } = await sb.from('blog_posts').update({ title: title.trim(), content: content.trim(), author_name: (author_name || '').trim() || null, slug: (slug || '').trim() || null }).eq('id', id)
     if (error) return setMsg(error.message)
     setEditing(null); setMsg('Save hoyeche.'); load()
   }
@@ -145,6 +145,7 @@ export default function AdminBlog() {
                 <input className={C.input} value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
                 <textarea className={C.input} rows={8} value={editing.content} onChange={(e) => setEditing({ ...editing, content: e.target.value })} />
                 <input className={C.input} placeholder="Lekhok" value={editing.author_name || ''} onChange={(e) => setEditing({ ...editing, author_name: e.target.value })} />
+                <input className={C.input} placeholder="Public link naam (a-z, 0-9, dash). Share korar pore bodlaben na" value={editing.slug || ''} onChange={(e) => setEditing({ ...editing, slug: e.target.value })} />
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button className={btn} onClick={savePost}>Save</button>
                   <button className="btn" onClick={() => setEditing(null)}>Cancel</button>
@@ -157,7 +158,8 @@ export default function AdminBlog() {
                   <div className={C.name}>{p.title}</div>
                   <div className={C.muted}>{p.author_name && `${p.author_name} · `}{fmt(p.created_at)}</div>
                 </div>
-                <a href={`#/blog?id=${p.id}`} target="_blank" rel="noreferrer"><button className="btn">View</button></a>
+                <a href={`/b/${p.slug || p.id}`} target="_blank" rel="noreferrer"><button className="btn">View</button></a>
+                <button className="btn" onClick={() => navigator.clipboard?.writeText(`${location.origin}/b/${p.slug || p.id}`)}>Copy link</button>
                 <button className="btn" onClick={() => setEditing({ ...p })}>Edit</button>
                 <button className={C.danger} onClick={() => delPost(p)}>✕</button>
               </div>
