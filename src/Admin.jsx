@@ -10,6 +10,7 @@ import Vote from './AdminVote'
 import VoteCharts from './VoteCharts'
 import Blog from './AdminBlog'
 import Team from './AdminTeam'
+import AdminHeritage from './AdminHeritage' 
 import { NAV } from './adminNav'
 import { enableSound, ting, toast } from './alerts'
 import { C, theme } from './adminUi'
@@ -219,6 +220,7 @@ function Dash({ role }) {
           {page === 'vote' && <Vote />}
           {page === 'blog' && <Blog />}
           {page === 'team' && isSuper && <Team />}
+          {page === 'heritage' && <AdminHeritage />}
         </main>
       </div>
     </div>

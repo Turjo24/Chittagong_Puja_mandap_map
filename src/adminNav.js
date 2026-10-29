@@ -13,5 +13,6 @@ export const NAV = [
   ['vote', '🔥 Vote'],
   ['blog', '📝 Blog'],
   ['team', '👥 Team (sub-admin)'],
+  ['heritage', '🏛 Heritage']
 ]
 export const PERM_KEYS = NAV.filter(([k]) => k !== 'team')

@@ -14,7 +14,8 @@ const L = [
   ['#/about', 'About', 'সম্পর্কে'],
   ['#/tutorial', 'Tutorial', 'টিউটোরিয়াল'],
   ['#/blog', 'Blog', 'ব্লগ'],
-  ['#/zones', 'Zones', 'জোন']
+  ['#/zones', 'Zones', 'জোন'],
+  ['#/heritage', 'Heritage', 'হেরিটেজ'],
 ]
 
 // Mobile e hamburger button er pashe likha, ar tooltip er likha (ekhane chaile bodlate paro)

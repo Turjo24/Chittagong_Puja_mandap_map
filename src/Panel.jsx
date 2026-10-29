@@ -124,7 +124,7 @@ export default function Panel({ m, name, t, onClose }) {
 
         {m.address && <p className="muted">{m.address}</p>}
 
-        {/* Directions + Share icon */}
+        {/* Directions + Heritage + Share icon */}
         <div
           style={{
             display: 'flex',
@@ -145,9 +145,9 @@ export default function Panel({ m, name, t, onClose }) {
             </button>
           </a>
 
-          {/* এখানে slug বাদ দিয়ে সরাসরি ?m=id ব্যবহার করা হয়েছে */}
+          {/* সরাসরি specific mandap id দিয়ে হেরিটেজ পেজে নিয়ে যাবে */}
           <a
-            href={`/?m=${m.id}`}
+            href={`/#/heritage?id=${m.id}`}
             target="_blank"
             rel="noreferrer"
             style={{ textDecoration: 'none' }}

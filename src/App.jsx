@@ -12,7 +12,9 @@ import Flame from './Flame'
 import About from './About'
 import Tutorial from './Tutorial'
 import { T } from './i18n'
+import Heritage from './HeritagePage'
 import './styles.css'
+import HeritagePage from './HeritagePage'
 const Admin = lazy(() => import('./Admin'))
 const Sponsors = lazy(() => import('./Sponsors'))
 const Schedule = lazy(() => import('./Schedule'))
@@ -108,6 +110,7 @@ export default function App() {
   if (rt.startsWith('#/blog-submit')) return sub(<SubmitBlog lang={lang} />) // '#/blog' er age thakte hobe
   if (rt.startsWith('#/blog')) return sub(<Blog lang={lang} />)
   if (rt.startsWith('#/zones')) return sub(<MapPage lang={lang} />)
+  if (rt.startsWith('#/heritage')) return sub(<HeritagePage lang={lang} />)
 
   const nm = (m) => (lang === 'bn' && m.name_bn ? m.name_bn : m.name)
 
