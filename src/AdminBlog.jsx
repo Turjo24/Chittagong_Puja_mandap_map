@@ -11,8 +11,9 @@ export default function AdminBlog() {
   const [msg, setMsg] = useState('')
   const [pending, setPending] = useState([])
   const [posts, setPosts] = useState([])
-  const [edits, setEdits] = useState({})   // pending submission er edit kora title/content
-  const [editing, setEditing] = useState(null) // published post edit form
+  const [edits, setEdits] = useState({})
+  const [editing, setEditing] = useState(null) // published post edit object
+  const [editFiles, setEditFiles] = useState([]) // edit state-এর জন্য ছবি
   const [form, setForm] = useState({ title: '', content: '', author: '' })
   const [files, setFiles] = useState([])
   const [busy, setBusy] = useState(false)
@@ -31,7 +32,7 @@ export default function AdminBlog() {
   const setEdit = (s, k, v) => setEdits((e) => ({ ...e, [s.id]: { ...e[s.id], [k]: v } }))
   const removeImg = async (path) => { if (path) await sb.storage.from('photos').remove([path]) }
 
-  // ---- admin nije post add kore ----
+  // ---- admin new post ----
   async function addPost(e) {
     e.preventDefault(); setMsg('')
     const pics = files.slice(0, 1)
@@ -55,7 +56,7 @@ export default function AdminBlog() {
     setBusy(false)
   }
 
-  // ---- user submission approve / reject ----
+  // ---- approve / reject ----
   async function approve(s) {
     setMsg('')
     const title = val(s, 'title').trim(), content = val(s, 'content').trim()
@@ -82,13 +83,51 @@ export default function AdminBlog() {
     load()
   }
 
-  // ---- published post edit / delete ----
+  // ---- save edited post ----
   async function savePost() {
-    const { id, title, content, author_name, slug } = editing
+    const { id, title, content, author_name, slug, image_url, image_path } = editing
     if (!title.trim() || !content.trim()) return setMsg('Title ar details dorkar.')
-    const { error } = await sb.from('blog_posts').update({ title: title.trim(), content: content.trim(), author_name: (author_name || '').trim() || null, slug: (slug || '').trim() || null }).eq('id', id)
-    if (error) return setMsg(error.message)
-    setEditing(null); setMsg('Save hoyeche.'); load()
+    setBusy(true)
+    try {
+      let finalUrl = image_url
+      let finalPath = image_path
+
+      // নতুন ছবি সিলেক্ট করা থাকলে আপলোড হবে এবং পুরোনো ছবি থাকলে ডিলিট হবে
+      if (editFiles.length) {
+        const err = check(editFiles)
+        if (err) throw new Error(err)
+        if (image_path) await removeImg(image_path)
+        const newImg = (await uploadAll(editFiles.slice(0, 1)))[0]
+        finalUrl = newImg.url
+        finalPath = newImg.path
+      }
+
+      const { error } = await sb.from('blog_posts').update({
+        title: title.trim(),
+        content: content.trim(),
+        author_name: (author_name || '').trim() || null,
+        slug: (slug || '').trim() || null,
+        image_url: finalUrl,
+        image_path: finalPath
+      }).eq('id', id)
+
+      if (error) throw error
+      setEditing(null)
+      setEditFiles([])
+      setMsg('Save hoyeche.')
+      load()
+    } catch (x) {
+      setMsg(x.message)
+    }
+    setBusy(false)
+  }
+
+  // ---- delete image in edit mode ----
+  async function removeEditImage() {
+    if (!editing?.image_path) return
+    if (!confirm('Chobi ta muche phelben?')) return
+    await removeImg(editing.image_path)
+    setEditing({ ...editing, image_url: null, image_path: null })
   }
 
   async function delPost(p) {
@@ -146,9 +185,22 @@ export default function AdminBlog() {
                 <textarea className={C.input} rows={8} value={editing.content} onChange={(e) => setEditing({ ...editing, content: e.target.value })} />
                 <input className={C.input} placeholder="Lekhok" value={editing.author_name || ''} onChange={(e) => setEditing({ ...editing, author_name: e.target.value })} />
                 <input className={C.input} placeholder="Public link naam (a-z, 0-9, dash). Share korar pore bodlaben na" value={editing.slug || ''} onChange={(e) => setEditing({ ...editing, slug: e.target.value })} />
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button className={btn} onClick={savePost}>Save</button>
-                  <button className="btn" onClick={() => setEditing(null)}>Cancel</button>
+                
+                {/* Image Edit Section */}
+                <div style={{ marginTop: 8, padding: 10, border: '1px dashed #ccc', borderRadius: 8 }}>
+                  {editing.image_url ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <img src={editing.image_url} alt="" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8 }} />
+                      <button type="button" className={C.danger} onClick={removeEditImage}>✕ Chobi muche felun</button>
+                    </div>
+                  ) : (
+                    <PhotoPicker files={editFiles} setFiles={setEditFiles} label="Notun chobi jug koryn (optional)" />
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  <button className={btn} disabled={busy} onClick={savePost}>{busy ? 'Saving...' : 'Save'}</button>
+                  <button className="btn" onClick={() => { setEditing(null); setEditFiles([]) }}>Cancel</button>
                 </div>
               </>
             ) : (
@@ -158,9 +210,9 @@ export default function AdminBlog() {
                   <div className={C.name}>{p.title}</div>
                   <div className={C.muted}>{p.author_name && `${p.author_name} · `}{fmt(p.created_at)}</div>
                 </div>
-                <a href={`/b/${p.slug || p.id}`} target="_blank" rel="noreferrer"><button className="btn">View</button></a>
-                <button className="btn" onClick={() => navigator.clipboard?.writeText(`${location.origin}/b/${p.slug || p.id}`)}>Copy link</button>
-                <button className="btn" onClick={() => setEditing({ ...p })}>Edit</button>
+                <a href={`/#/blog?id=${p.id}`} target="_blank" rel="noreferrer"><button className="btn">View</button></a>
+                <button className="btn" onClick={() => navigator.clipboard?.writeText(`${location.origin}/#/blog?id=${p.id}`)}>Copy link</button>
+                <button className="btn" onClick={() => { setEditing({ ...p }); setEditFiles([]) }}>Edit</button>
                 <button className={C.danger} onClick={() => delPost(p)}>✕</button>
               </div>
             )}

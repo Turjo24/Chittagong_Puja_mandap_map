@@ -61,52 +61,34 @@ export default function Blog({ lang = 'bn' }) {
 
   useEffect(() => {
     let active = true
-
     setErr('')
 
     if (id) {
       setPost(undefined)
-
       sb.from('blog_posts')
         .select('*')
         .eq('id', id)
         .maybeSingle()
         .then(({ data, error }) => {
           if (!active) return
-
-          if (error) {
-            setErr(error.message)
-            return
-          }
-
+          if (error) return setErr(error.message)
           setPost(data || null)
         })
     } else {
       setPosts(null)
-
       sb.from('blog_posts')
-        .select(
-          'id,title,content,image_url,author_name,created_at'
-        )
+        .select('id,title,content,image_url,author_name,created_at')
         .order('created_at', { ascending: false })
         .then(({ data, error }) => {
           if (!active) return
-
-          if (error) {
-            setErr(error.message)
-            return
-          }
-
+          if (error) return setErr(error.message)
           setPosts(data || [])
         })
     }
 
-    return () => {
-      active = false
-    }
+    return () => { active = false }
   }, [id])
 
-  // Error message
   if (err) {
     return (
       <div className="page">
@@ -135,72 +117,70 @@ export default function Blog({ lang = 'bn' }) {
     }
 
     return (
-      <div
-        className="page"
-        style={{
-          maxWidth: 760,
-          margin: '0 auto'
-        }}
-      >
-        <a href="#/blog">{t.back}</a>
+      <div className="page" style={{ maxWidth: 760, margin: '0 auto' }}>
+        <a href="#/blog" style={{ textDecoration: 'none', fontWeight: 'bold' }}>{t.back}</a>
 
-        <h2 style={{ marginBottom: 4 }}>
-          {post.title}
-        </h2>
-
-        <p
-          className="muted"
-          style={{ marginTop: 0 }}
+        {/* Detailed Single Blog Card */}
+        <div 
+          style={{
+            border: '1px solid rgba(128,128,128,0.25)',
+            borderRadius: 16,
+            padding: 20,
+            marginTop: 16,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+          }}
         >
-          {post.author_name && (
-            <>
-              {t.by}: {post.author_name} ·{' '}
-            </>
-          )}
-          {date(post.created_at)}
-        </p>
+          <h2 style={{ margin: '0 0 10px', fontSize: '1.8rem' }}>{post.title}</h2>
 
-        {post.image_url && (
-          <img
-            src={post.image_url}
-            alt={post.title || ''}
-            style={{
-              width: '100%',
-              maxHeight: 420,
-              objectFit: 'cover',
-              borderRadius: 14,
-              marginBottom: 14
-            }}
-          />
-        )}
-
-        {paras(post.content).map((p, i) => (
-          <p
-            key={i}
-            style={{
-              lineHeight: 1.8,
-              whiteSpace: 'pre-line'
+          <div 
+            style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              flexWrap: 'wrap', 
+              gap: 10,
+              paddingBottom: 14,
+              borderBottom: '1px solid rgba(128,128,128,0.2)',
+              marginBottom: 16
             }}
           >
-            {p}
-          </p>
-        ))}
+            <span className="muted" style={{ fontSize: 14 }}>
+              {post.author_name ? `${t.by}: ${post.author_name}` : 'Admin'} · {date(post.created_at)}
+            </span>
 
-        <ShareButton m={post} kind="b" title={post.title} />
+            {/* Share Options */}
+            <ShareButton m={post} kind="b" title={post.title} />
+          </div>
+
+          {post.image_url && (
+            <img
+              src={post.image_url}
+              alt={post.title || ''}
+              style={{
+                width: '100%',
+                maxHeight: 420,
+                objectFit: 'cover',
+                borderRadius: 12,
+                marginBottom: 20
+              }}
+            />
+          )}
+
+          <div style={{ fontSize: '1.05rem', lineHeight: 1.8 }}>
+            {paras(post.content).map((p, i) => (
+              <p key={i} style={{ marginBottom: 16, whiteSpace: 'pre-line' }}>
+                {p}
+              </p>
+            ))}
+          </div>
+        </div>
       </div>
     )
   }
 
   // Blog listing
   return (
-    <div
-      className="page"
-      style={{
-        maxWidth: 1100,
-        margin: '0 auto'
-      }}
-    >
-      {/* Header */}
+    <div className="page" style={{ maxWidth: 1100, margin: '0 auto' }}>
       <div
         style={{
           display: 'flex',
@@ -212,49 +192,27 @@ export default function Blog({ lang = 'bn' }) {
         }}
       >
         <div>
-          <h2 style={{ marginBottom: 2 }}>
-            {t.title}
-          </h2>
-
-          <p
-            className="muted"
-            style={{ marginTop: 0 }}
-          >
-            {t.sub}
-          </p>
+          <h2 style={{ marginBottom: 2 }}>{t.title}</h2>
+          <p className="muted" style={{ marginTop: 0 }}>{t.sub}</p>
         </div>
 
         <a href="#/blog-submit">
-          <button className="btn pri">
-            {t.write}
-          </button>
+          <button className="btn pri">{t.write}</button>
         </a>
       </div>
 
-      {/* Loading */}
-      {posts === null && (
-        <p className="muted">{t.loading}</p>
-      )}
+      {posts === null && <p className="muted">{t.loading}</p>}
+      {posts !== null && posts?.length === 0 && <p className="muted">{t.none}</p>}
 
-      {/* Empty state */}
-      {posts !== null && posts?.length === 0 && (
-        <p className="muted">{t.none}</p>
-      )}
-
-      {/* Responsive blog grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {(posts || []).map((p) => (
           <a
             key={p.id}
             href={`#/blog?id=${p.id}`}
             className="block h-full no-underline text-inherit"
-            style={{
-              color: 'inherit',
-              textDecoration: 'none'
-            }}
+            style={{ color: 'inherit', textDecoration: 'none' }}
           >
             <article
-              className="h-full overflow-hidden rounded-xl border border-gray-300/30"
               style={{
                 height: '100%',
                 border: '1px solid rgba(128,128,128,.3)',
@@ -263,13 +221,11 @@ export default function Blog({ lang = 'bn' }) {
                 transition: 'transform 0.2s ease'
               }}
             >
-              {/* Blog image */}
               {p.image_url ? (
                 <img
                   src={p.image_url}
                   alt={p.title || ''}
                   loading="lazy"
-                  className="block h-40 w-full object-cover"
                   style={{
                     display: 'block',
                     width: '100%',
@@ -278,47 +234,24 @@ export default function Blog({ lang = 'bn' }) {
                   }}
                 />
               ) : (
-                <div
-                  style={{
-                    height: 160,
-                    background: 'rgba(232,89,12,.12)'
-                  }}
-                />
+                <div style={{ height: 160, background: 'rgba(232,89,12,.12)' }} />
               )}
 
-              {/* Blog details */}
               <div style={{ padding: 14 }}>
-                <h4
-                  style={{
-                    margin: '0 0 8px',
-                    lineHeight: 1.5,
-                    overflowWrap: 'anywhere'
-                  }}
-                >
+                <h4 style={{ margin: '0 0 8px', lineHeight: 1.5, overflowWrap: 'anywhere' }}>
                   {p.title}
                 </h4>
 
                 <small className="muted">
-                  {p.author_name && (
-                    <>{p.author_name} · </>
-                  )}
+                  {p.author_name && <>{p.author_name} · </>}
                   {date(p.created_at)}
                 </small>
 
-                <p
-                  style={{
-                    margin: '10px 0',
-                    fontSize: 14,
-                    lineHeight: 1.7,
-                    overflowWrap: 'anywhere'
-                  }}
-                >
+                <p style={{ margin: '10px 0', fontSize: 14, lineHeight: 1.7, overflowWrap: 'anywhere' }}>
                   {excerpt(p.content)}
                 </p>
 
-                <b style={{ fontSize: 13 }}>
-                  {t.more}
-                </b>
+                <b style={{ fontSize: 13 }}>{t.more}</b>
               </div>
             </article>
           </a>
