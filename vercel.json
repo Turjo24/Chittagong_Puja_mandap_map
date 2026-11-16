@@ -1,8 +1,7 @@
 {
   "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+    { "source": "/m/:key", "destination": "/api/share?type=m&key=:key" },
+    { "source": "/b/:key", "destination": "/api/share?type=b&key=:key" },
+    { "source": "/h/:key", "destination": "/api/share?type=h&key=:key" }
   ]
 }

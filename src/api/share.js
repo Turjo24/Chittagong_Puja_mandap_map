@@ -1,4 +1,4 @@
-// Vercel serverless function: /m/:key (mandap heritage page) ar /b/:key (blog post)
+// Vercel serverless function: /m/:key (mandap), /b/:key (blog post), /h/:id (heritage doc)
 // key = slug (jemon "satish-babu-lane") ba purono numeric ID (138 -> slug e 301 redirect hobe)
 //
 // Eta ekta PUBLIC page: crawler (Facebook, Prothom Alo er link preview, WhatsApp...) ar manush,
@@ -11,12 +11,16 @@ const DEFAULT_IMAGE = `${ORIGIN}/pintro.png` // public/pintro.png thakte hobe (1
 const esc = (s = '') =>
   String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 
-// shudhu absolute http(s) image; http hole https
+// shudhu absolute http(s) image; http hole https; space/Bangla char thakle encode kore dey
 const imgUrl = (u) => {
   if (typeof u !== 'string') return null
   const s = u.trim()
   if (!/^https?:\/\//i.test(s)) return null
-  return s.replace(/^http:\/\//i, 'https://')
+  try {
+    return new URL(s.replace(/^http:\/\//i, 'https://')).href
+  } catch {
+    return null
+  }
 }
 
 const paras = (s) => String(s || '').split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
@@ -247,6 +251,50 @@ ${shareButtons(url, p.title)}
   return { page: shell({ title, desc, url, image, type: 'article', extraMeta: extra, jsonld, body }) }
 }
 
+// ---------- heritage doc page (/h/:id) ----------
+async function heritagePage(key) {
+  if (!isNum(key)) return null
+  const d = (await sbGet('heritage_docs', { select: '*', id: `eq.${key}`, status: 'eq.approved', limit: '1' }))[0]
+  if (!d) return null
+
+  const [m, albums] = await Promise.all([
+    sbGet('mandaps', { select: 'id,slug,name,name_bn,area,og_image', id: `eq.${d.mandap_id}`, limit: '1' }).then((r) => r[0]).catch(() => null),
+    sbGet('heritage_albums', { select: 'image_url', heritage_id: `eq.${d.id}`, limit: '8' }).catch(() => []),
+  ])
+
+  const mName = m?.name_bn || m?.name || 'পূজা মণ্ডপ'
+  const title0 = d.title || `${mName} — ${d.year} সালের হেরিটেজ`
+  const pics = [
+    ...albums.map((a) => imgUrl(a.image_url)),
+    imgUrl(d.entry_point_photo), imgUrl(d.exit_point_photo),
+    imgUrl(d.pandal_architect_photo), imgUrl(d.statue_artist_photo), imgUrl(d.lighting_artist_photo),
+  ].filter(Boolean)
+  const image = pics[0] || imgUrl(m?.og_image) || DEFAULT_IMAGE
+  const url = `${ORIGIN}/h/${encodeURIComponent(d.id)}`
+  const people = [d.pandal_architect && `মণ্ডপ: ${d.pandal_architect}`, d.statue_artist && `প্রতিমা: ${d.statue_artist}`, d.lighting_artist && `আলোকসজ্জা: ${d.lighting_artist}`].filter(Boolean)
+  const desc = cut([`${d.year} সাল`, m?.area, ...people, 'হেরিটেজ নথি পড়ুন।'].filter(Boolean).join(' · '), 200)
+  const title = `${title0} | ${SITE}`
+
+  const body = `
+${pics[0] ? `<img class="hero" src="${esc(pics[0])}" alt="${esc(title0)}">` : ''}
+<h1>${esc(title0)}</h1>
+<div class="chips">
+  <span class="chip">📅 ${esc(d.year)} সাল</span>
+  ${m?.area ? `<span class="chip">📍 ${esc(m.area)}</span>` : ''}
+  ${people.map((p) => `<span class="chip">${esc(p)}</span>`).join('')}
+</div>
+${d.location_changed && d.location_change_history ? `<h2>স্থান পরিবর্তন</h2><div class="story">${paras(d.location_change_history).map((x) => `<p>${html(x)}</p>`).join('')}</div>` : ''}
+<div class="acts">
+  <a class="btn pri" href="${ORIGIN}/#/heritage?docId=${encodeURIComponent(d.id)}">📖 পুরো হেরিটেজ নথি পড়ুন</a>
+  ${m ? `<a class="btn" href="${ORIGIN}/m/${encodeURIComponent(m.slug || m.id)}">${esc(mName)} মণ্ডপ</a>` : ''}
+</div>
+${pics.length > 1 ? `<h2>ছবি</h2><div class="gal">${pics.map((p) => `<a href="${esc(p)}" target="_blank" rel="noopener"><img src="${esc(p)}" loading="lazy" alt="${esc(title0)}"></a>`).join('')}</div>` : ''}
+<h2>শেয়ার করুন</h2>
+${shareButtons(url, title0)}`
+
+  return { page: shell({ title, desc, url, image, type: 'article', body }) }
+}
+
 function notFound(res) {
   res.setHeader('Content-Type', 'text/html; charset=utf-8')
   res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=30')
@@ -260,12 +308,12 @@ function notFound(res) {
 }
 
 export default async function handler(req, res) {
-  const type = req.query.type === 'b' ? 'b' : 'm'
+  const type = ['b', 'h'].includes(req.query.type) ? req.query.type : 'm'
   const key = String(req.query.key || '').toLowerCase().replace(/[^0-9a-z-]/g, '')
   if (!key) return notFound(res)
 
   try {
-    const r = type === 'b' ? await blogPage(key) : await mandapPage(key)
+    const r = type === 'b' ? await blogPage(key) : type === 'h' ? await heritagePage(key) : await mandapPage(key)
     if (!r) return notFound(res)
     if (r.redirect) {
       res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=300')

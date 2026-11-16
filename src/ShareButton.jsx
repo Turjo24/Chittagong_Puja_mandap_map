@@ -1,27 +1,21 @@
 import { toast } from './alerts'
 
+// Share link GULO SOB SOMOY server-rendered path hobe (/m, /b, /h) — jate Facebook/WhatsApp/Messenger
+// crawler og:image + title pay. "/?m=.." ba "#/..." link e per-page thumbnail kokhono ashe na.
 export default function ShareButton({ m, kind = 'm', title }) {
   if (!m) return null
 
-  // ১. ডায়নামিক URL তৈরি (হেরিটেজ, ব্লগ ও সাধারণ মণ্ডপের জন্য)
-  let url = `${window.location.origin}/?m=${m.id || m.mandap_id}`
+  const origin = window.location.origin
+  let url
+  if (kind === 'heritage') url = `${origin}/h/${m.id}`
+  else if (kind === 'b') url = `${origin}/b/${encodeURIComponent(m.slug || m.id)}`
+  else url = `${origin}/m/${encodeURIComponent(m.slug || m.id || m.mandap_id)}`
 
-  if (kind === 'heritage') {
-    url = `${window.location.origin}/#/heritage?docId=${m.id}`
-  } else if (kind === 'b') {
-    url = `${window.location.origin}/#/blog?id=${m.id}`
-  }
-
-  // ২. মণ্ডপের নাম ও ছবির URL বের করা
   const placeName = title || m.mandaps?.name_bn || m.mandaps?.name || m.name_bn || m.name || 'Mandap'
-  const imageUrl = m.pandal_architect_photo || m.entry_point_photo || m.exit_point_photo || m.url || ''
-  
   const text = `${placeName} — Chattogram Puja Mandap Guide`
 
-  // ৩. সোশ্যাল শেয়ারের জন্য কাস্টম টেক্সট (ছবি সহ)
-  const shareMessage = imageUrl 
-    ? `${text}\n\n📷 ছবি দেখুন: ${imageUrl}\n\n🔗 বিস্তারিত তথ্য ও ইতিহাস: ${url}`
-    : `${text}\n\n🔗 বিস্তারিত তথ্য ও ইতিহাস: ${url}`
+  // Message e SHUDHU ekta link rakho (page er link). Image er link dile WhatsApp oi image link tai preview kore.
+  const shareMessage = `${text}\n${url}`
 
   const fb = () => {
     window.open(
@@ -32,27 +26,20 @@ export default function ShareButton({ m, kind = 'm', title }) {
   }
 
   const wa = () => {
-    const waShareText = encodeURIComponent(shareMessage)
-    window.open(`https://api.whatsapp.com/send?text=${waShareText}`, '_blank', 'noopener')
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareMessage)}`, '_blank', 'noopener')
   }
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(shareMessage)
-      toast('Copied!', 'ছবি ও লিংক কপি হয়েছে!')
+      await navigator.clipboard.writeText(url)
+      toast('Copied!', 'লিংক কপি হয়েছে!')
     } catch {
-      prompt('Link copy koro:', shareMessage)
+      prompt('Link copy koro:', url)
     }
   }
 
   const native = () => {
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      navigator.share({
-        title: text,
-        text: shareMessage,
-        url: url
-      }).catch(() => {})
-    }
+    if (navigator.share) navigator.share({ title: text, url }).catch(() => {})
   }
 
   return (
