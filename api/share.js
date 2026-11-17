@@ -287,7 +287,7 @@ export default function handler(req, res) {
         
         <!-- Open Graph / Facebook / WhatsApp (এই ট্যাগগুলোই কার্ড তৈরি করবে) -->
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="${redirectUrl}" />
+       <meta property="og:url" content="https://ctgpujamandap.vercel.app/api/share?type=${type}&id=${id}&title=${title}&img=${img}" />
         <meta property="og:title" content="${decodedTitle} — Chattogram Puja Mandap Guide" />
         <meta property="og:description" content="মণ্ডপ বা হেরিটেজ সম্পর্কে বিস্তারিত জানতে লিংকে ক্লিক করুন।" />
         <meta property="og:image" content="${decodedImg}" />
