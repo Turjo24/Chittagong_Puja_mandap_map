@@ -273,7 +273,8 @@ export default function handler(req, res) {
 
   // ডিকোড করা ডেটা
   const decodedTitle = decodeURIComponent(title || 'Mandap');
-  const decodedImg = decodeURIComponent(img || '');
+
+  const decodedImg = decodeURIComponent(img || '') || 'https://ctgpujamandap.vercel.app/pintro.png';
 
   // Facebook/WhatsApp-কে বোঝানোর জন্য মেটা ট্যাগ (HTML) পাঠাচ্ছি এবং সাথে সাথে রিডাইরেক্ট করে দিচ্ছি
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
