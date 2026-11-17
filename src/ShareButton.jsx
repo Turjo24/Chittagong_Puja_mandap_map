@@ -39,14 +39,15 @@ export default function ShareButton({ m, kind = 'm', title }) {
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(waShareText)}`, '_blank', 'noopener')
   }
 
-  const copy = async () => {
+const copy = async () => {
     try {
-      // কপি করার সময় ক্লিন লিংকটাই কপি হবে, যাতে দেখতে ভালো লাগে
-      const copyText = `${text}\n\n🔗 বিস্তারিত তথ্য ও ইতিহাস: ${cleanUrl}`
+      // এখানে cleanUrl এর বদলে apiUrl করে দিন
+      const copyText = `${text}\n\n🔗 বিস্তারিত তথ্য ও ইতিহাস: ${apiUrl}`
       await navigator.clipboard.writeText(copyText)
-      toast('Copied!', 'লিংক কপি হয়েছে!')
+      toast('Copied!', 'লিংক কপি হয়েছে!')
     } catch {
-      prompt('Link copy koro:', cleanUrl)
+      // এখানেও apiUrl করে দিন
+      prompt('Link copy koro:', apiUrl)
     }
   }
 
@@ -54,11 +55,11 @@ export default function ShareButton({ m, kind = 'm', title }) {
     if (typeof navigator !== 'undefined' && navigator.share) {
       navigator.share({
         title: text,
-        url: cleanUrl
+        // এখানেও cleanUrl এর বদলে apiUrl করে দিন
+        url: apiUrl
       }).catch(() => {})
     }
   }
-
   return (
     <div className="acts" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
       <button type="button" className="btn pri" onClick={fb}>f Facebook e share</button>
