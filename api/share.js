@@ -298,9 +298,6 @@ export default function handler(req, res) {
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:title" content="${decodedTitle} — Chattogram Puja Mandap Guide" />
         <meta property="twitter:image" content="${decodedImg}" />
-
-        <!-- ম্যাজিক: মানুষ লিংকে ঢুকলেই সেকেন্ডের মধ্যে আসল পেজে নিয়ে যাবে -->
-        <meta http-equiv="refresh" content="0;url=${redirectUrl}" />
         <script>
           window.location.replace("${redirectUrl}");
         </script>
