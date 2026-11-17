@@ -259,25 +259,55 @@ function notFound(res) {
   }))
 }
 
-export default async function handler(req, res) {
-  const type = req.query.type === 'b' ? 'b' : 'm'
-  const key = String(req.query.key || '').toLowerCase().replace(/[^0-9a-z-]/g, '')
-  if (!key) return notFound(res)
+export default function handler(req, res) {
+  const { type, id, title, img } = req.query;
 
-  try {
-    const r = type === 'b' ? await blogPage(key) : await mandapPage(key)
-    if (!r) return notFound(res)
-    if (r.redirect) {
-      res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=300')
-      return res.redirect(301, r.redirect)
-    }
-    res.setHeader('Content-Type', 'text/html; charset=utf-8')
-    res.setHeader('X-Content-Type-Options', 'nosniff')
-    res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=120, stale-while-revalidate=600')
-    return res.status(200).send(r.page)
-  } catch (e) {
-    console.error('share error:', e.message)
-    res.setHeader('Cache-Control', 'no-store')
-    return res.status(500).send('Server error')
+  // মানুষ ক্লিক করলে আসল যে লিংকে যাবে, সেটা তৈরি করছি
+  let redirectUrl = `https://ctgpujamandap.vercel.app/?m=${id}`;
+  
+  if (type === 'heritage') {
+    redirectUrl = `https://ctgpujamandap.vercel.app/heritage?docId=${id}`;
+  } else if (type === 'blog') {
+    redirectUrl = `https://ctgpujamandap.vercel.app/blog?id=${id}`;
   }
+
+  // ডিকোড করা ডেটা
+  const decodedTitle = decodeURIComponent(title || 'Mandap');
+  const decodedImg = decodeURIComponent(img || '');
+
+  // Facebook/WhatsApp-কে বোঝানোর জন্য মেটা ট্যাগ (HTML) পাঠাচ্ছি এবং সাথে সাথে রিডাইরেক্ট করে দিচ্ছি
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.status(200).send(`
+    <!DOCTYPE html>
+    <html lang="bn">
+      <head>
+        <meta charset="utf-8" />
+        <title>${decodedTitle} — Chattogram Puja Mandap Guide</title>
+        
+        <!-- Open Graph / Facebook / WhatsApp (এই ট্যাগগুলোই কার্ড তৈরি করবে) -->
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="${redirectUrl}" />
+        <meta property="og:title" content="${decodedTitle} — Chattogram Puja Mandap Guide" />
+        <meta property="og:description" content="মণ্ডপ বা হেরিটেজ সম্পর্কে বিস্তারিত জানতে লিংকে ক্লিক করুন।" />
+        <meta property="og:image" content="${decodedImg}" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        
+        <!-- Twitter / X -->
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:title" content="${decodedTitle} — Chattogram Puja Mandap Guide" />
+        <meta property="twitter:image" content="${decodedImg}" />
+
+        <!-- ম্যাজিক: মানুষ লিংকে ঢুকলেই সেকেন্ডের মধ্যে আসল পেজে নিয়ে যাবে -->
+        <meta http-equiv="refresh" content="0;url=${redirectUrl}" />
+        <script>
+          window.location.replace("${redirectUrl}");
+        </script>
+      </head>
+      <body style="background-color: #f3f4f6; text-align: center; padding-top: 50px; font-family: sans-serif;">
+        <p>আপনাকে <b>${decodedTitle}</b>-এর পেজে নিয়ে যাওয়া হচ্ছে...</p>
+        <p><a href="${redirectUrl}" style="color: #0066cc;">যদি নিজে থেকে না যায়, তাহলে এখানে ক্লিক করুন</a></p>
+      </body>
+    </html>
+  `);
 }
