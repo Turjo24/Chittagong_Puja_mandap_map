@@ -3,45 +3,50 @@ import { toast } from './alerts'
 export default function ShareButton({ m, kind = 'm', title }) {
   if (!m) return null
 
-  // ১. ডায়নামিক URL তৈরি (হেরিটেজ, ব্লগ ও সাধারণ মণ্ডপের জন্য)
-  let url = `${window.location.origin}/?m=${m.id || m.mandap_id}`
+  const origin = window.location.origin
+  
+  // ১. ক্লিন URL (ইউজারদের দেখার জন্য আসল লিংক)
+  let cleanUrl = `${origin}/?m=${m.id || m.mandap_id}`
+  if (kind === 'heritage') cleanUrl = `${origin}/heritage?docId=${m.id}`
+  else if (kind === 'b') cleanUrl = `${origin}/blog?id=${m.id}`
 
-  if (kind === 'heritage') {
-    url = `${window.location.origin}/#/heritage?docId=${m.id}`
-  } else if (kind === 'b') {
-    url = `${window.location.origin}/#/blog?id=${m.id}`
-  }
-
-  // ২. মণ্ডপের নাম ও ছবির URL বের করা
+  // ২. ডায়নামিক কার্ডের জন্য API URL (যা ফেসবুক/হোয়াটসঅ্যাপে প্রিভিউ বানাবে)
   const placeName = title || m.mandaps?.name_bn || m.mandaps?.name || m.name_bn || m.name || 'Mandap'
   const imageUrl = m.pandal_architect_photo || m.entry_point_photo || m.exit_point_photo || m.url || ''
   
+  const type = kind === 'heritage' ? 'heritage' : kind === 'b' ? 'blog' : 'm'
+  const docId = m.id || m.mandap_id
+  
+  // এই API লিংকটাই মূলত নিউজ কার্ডের মতো প্রিভিউ দেখাবে
+  const apiUrl = `${origin}/api/share?type=${type}&id=${docId}&title=${encodeURIComponent(placeName)}&img=${encodeURIComponent(imageUrl)}`
+  
   const text = `${placeName} — Chattogram Puja Mandap Guide`
 
-  // ৩. সোশ্যাল শেয়ারের জন্য কাস্টম টেক্সট (ছবি সহ)
-  const shareMessage = imageUrl 
-    ? `${text}\n\n📷 ছবি দেখুন: ${imageUrl}\n\n🔗 বিস্তারিত তথ্য ও ইতিহাস: ${url}`
-    : `${text}\n\n🔗 বিস্তারিত তথ্য ও ইতিহাস: ${url}`
-
+  // ৩. শেয়ার ফাংশনসমূহ
   const fb = () => {
+    // ফেসবুকে API লিংক পাঠাবো, ফেসবুক নিজে থেকে ছবি ও টাইটেল নিয়ে কার্ড বানাবে
     window.open(
-      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(apiUrl)}`,
       '_blank',
       'noopener,width=600,height=500'
     )
   }
 
   const wa = () => {
-    const waShareText = encodeURIComponent(shareMessage)
-    window.open(`https://api.whatsapp.com/send?text=${waShareText}`, '_blank', 'noopener')
+    // হোয়াটসঅ্যাপে শুধু টাইটেল আর API লিংক পাঠাবো। 
+    // হোয়াটসঅ্যাপ নিজে লিংক রিড করে ছবির কার্ড বানিয়ে নেবে! আলাদা করে ছবির লিংক লেখার দরকার নেই।
+    const waShareText = `${text}\n\n${apiUrl}`
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(waShareText)}`, '_blank', 'noopener')
   }
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(shareMessage)
-      toast('Copied!', 'ছবি ও লিংক কপি হয়েছে!')
+      // কপি করার সময় ক্লিন লিংকটাই কপি হবে, যাতে দেখতে ভালো লাগে
+      const copyText = `${text}\n\n🔗 বিস্তারিত তথ্য ও ইতিহাস: ${cleanUrl}`
+      await navigator.clipboard.writeText(copyText)
+      toast('Copied!', 'লিংক কপি হয়েছে!')
     } catch {
-      prompt('Link copy koro:', shareMessage)
+      prompt('Link copy koro:', cleanUrl)
     }
   }
 
@@ -49,8 +54,7 @@ export default function ShareButton({ m, kind = 'm', title }) {
     if (typeof navigator !== 'undefined' && navigator.share) {
       navigator.share({
         title: text,
-        text: shareMessage,
-        url: url
+        url: cleanUrl
       }).catch(() => {})
     }
   }

@@ -3,19 +3,19 @@ import { createPortal } from 'react-dom'
 import Flame from './Flame'
 
 const L = [
-  ['#/', 'Map', 'মানচিত্র'],
-  ['#/routes', 'Routes & Fare', 'যাতায়াত ও খরচ'],
-  ['#/schedule', 'Schedule', 'তিথি'],
-  ['#/vote', 'Vote', 'ভোট'],
-  ['#/reps', 'Representatives', 'প্রতিনিধি'],
-  ['#/sponsors', 'Sponsors', 'স্পনসর'],
-  ['#/player', 'Pujo Song', 'পূজার গান'],
-  ['#/parikroma', 'Parikrama', 'পরিক্রমা'],
-  ['#/about', 'About', 'সম্পর্কে'],
-  ['#/tutorial', 'Tutorial', 'টিউটোরিয়াল'],
-  ['#/blog', 'Blog', 'ব্লগ'],
-  ['#/zones', 'Zones', 'জোন'],
-  ['#/heritage', 'Heritage', 'হেরিটেজ'],
+  ['/', 'Map', 'মানচিত্র'],
+  ['/routes', 'Routes & Fare', 'যাতায়াত ও খরচ'],
+  ['/schedule', 'Schedule', 'তিথি'],
+  ['/vote', 'Vote', 'ভোট'],
+  ['/reps', 'Representatives', 'প্রতিনিধি'],
+  ['/sponsors', 'Sponsors', 'স্পনসর'],
+  ['/player', 'Pujo Song', 'পূজার গান'],
+  ['/parikroma', 'Parikrama', 'পরিক্রমা'],
+  ['/about', 'About', 'সম্পর্কে'],
+  ['/tutorial', 'Tutorial', 'টিউটোরিয়াল'],
+  ['/blog', 'Blog', 'ব্লগ'],
+  ['/zones', 'Zones', 'জোন'],
+  ['/heritage', 'Heritage', 'হেরিটেজ'],
 ]
 
 // Mobile e hamburger button er pashe likha, ar tooltip er likha (ekhane chaile bodlate paro)

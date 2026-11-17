@@ -12,9 +12,9 @@ import Flame from './Flame'
 import About from './About'
 import Tutorial from './Tutorial'
 import { T } from './i18n'
-import Heritage from './HeritagePage'
-import './styles.css'
 import HeritagePage from './HeritagePage'
+import './styles.css'
+
 const Admin = lazy(() => import('./Admin'))
 const Sponsors = lazy(() => import('./Sponsors'))
 const Schedule = lazy(() => import('./Schedule'))
@@ -39,12 +39,21 @@ export default function App() {
   const [q, setQ] = useState(''), [area, setArea] = useState('')
   const [me, setMe] = useState(null)
   const [suggest, setSuggest] = useState(false), [picked, setPicked] = useState(null)
-  const [route, setRoute] = useState(location.hash)
-  // Shared/deep links (#/reps?id=.., /?m=slug) e intro dekhabo na
-  const [loaded, setLoaded] = useState(false), [intro, setIntro] = useState(!sessionStorage.getItem('intro') && !/^#\/./.test(location.hash) && !new URLSearchParams(location.search).has('m'))
+  
+  // ১. ফিক্স: location.hash এর বদলে window.location.pathname
+  const [route, setRoute] = useState(window.location.pathname) 
+  
+  // ২. ফিক্স: ইন্ট্রো পেজের লজিক থেকে হ্যাশ চেকিং বাদ দেওয়া হয়েছে
+  const [loaded, setLoaded] = useState(false)
+  const [intro, setIntro] = useState(!sessionStorage.getItem('intro') && window.location.pathname === '/' && !new URLSearchParams(window.location.search).has('m'))
   const t = T[lang]
 
-  useEffect(() => { const f = () => setRoute(location.hash); addEventListener('hashchange', f); return () => removeEventListener('hashchange', f) }, [])
+  // ৩. ফিক্স: hashchange ইভেন্টের বদলে popstate ইভেন্ট ব্যবহার করা হয়েছে
+  useEffect(() => { 
+    const f = () => setRoute(window.location.pathname); 
+    window.addEventListener('popstate', f); 
+    return () => window.removeEventListener('popstate', f) 
+  }, [])
 
   useEffect(() => {
     const load = async () => {
@@ -97,20 +106,20 @@ export default function App() {
 
   const sub = (el) => <><Live /><Nav lang={lang} setLang={setLang} dark={dark} setDark={setDark} route={route} tools /><Suspense fallback={<div className="page" />}>{el}</Suspense></>
   const rt = route.toLowerCase() // case-insensitive, jate #/Sponsors ba #/Representatives o kaj kore
-  if (rt.startsWith('#/admin')) return <><Live /><Suspense fallback={null}><Admin /></Suspense></>
-  if (rt.startsWith('#/sponsors')) return sub(<Sponsors lang={lang} />)
-  if (rt.startsWith('#/routes')) return sub(<Routes lang={lang} />)
-  if (rt.startsWith('#/schedule')) return sub(<Schedule lang={lang} />)
-  if (rt.startsWith('#/vote')) return sub(<Vote lang={lang} />)
-  if (rt.startsWith('#/reps')) return sub(<Reps lang={lang} />)
-  if (rt.startsWith('#/player')) return sub(<Player lang={lang} />)
-  if (rt.startsWith('#/parikroma')) return sub(<Parikroma lang={lang} />)
-  if (rt.startsWith('#/about')) return sub(<About lang={lang} />)
-  if (rt.startsWith('#/tutorial')) return sub(<Tutorial lang={lang} />)
-  if (rt.startsWith('#/blog-submit')) return sub(<SubmitBlog lang={lang} />) // '#/blog' er age thakte hobe
-  if (rt.startsWith('#/blog')) return sub(<Blog lang={lang} />)
-  if (rt.startsWith('#/zones')) return sub(<MapPage lang={lang} />)
-  if (rt.startsWith('#/heritage')) return sub(<HeritagePage lang={lang} />)
+  if (rt.startsWith('/admin')) return <><Live /><Suspense fallback={null}><Admin /></Suspense></>
+  if (rt.startsWith('/sponsors')) return sub(<Sponsors lang={lang} />)
+  if (rt.startsWith('/routes')) return sub(<Routes lang={lang} />)
+  if (rt.startsWith('/schedule')) return sub(<Schedule lang={lang} />)
+  if (rt.startsWith('/vote')) return sub(<Vote lang={lang} />)
+  if (rt.startsWith('/reps')) return sub(<Reps lang={lang} />)
+  if (rt.startsWith('/player')) return sub(<Player lang={lang} />)
+  if (rt.startsWith('/parikroma')) return sub(<Parikroma lang={lang} />)
+  if (rt.startsWith('/about')) return sub(<About lang={lang} />)
+  if (rt.startsWith('/tutorial')) return sub(<Tutorial lang={lang} />)
+  if (rt.startsWith('/blog-submit')) return sub(<SubmitBlog lang={lang} />) // '#/blog' er age thakte hobe
+  if (rt.startsWith('/blog')) return sub(<Blog lang={lang} />)
+  if (rt.startsWith('/zones')) return sub(<MapPage lang={lang} />)
+  if (rt.startsWith('/heritage')) return sub(<HeritagePage lang={lang} />)
 
   const nm = (m) => (lang === 'bn' && m.name_bn ? m.name_bn : m.name)
 

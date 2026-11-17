@@ -3,9 +3,9 @@ import { sb } from './supabase'
 import ShareButton from './ShareButton'
 import SubmitHeritage from './SubmitHeritage'
 
+// ১. হ্যাশ (#) এর বদলে ক্লিন URL-এর search query রিড করা হলো
 const getParam = (key) => {
-  const hash = window.location.hash || ''
-  const query = hash.split('?')[1] || ''
+  const query = window.location.search || ''
   return new URLSearchParams(query).get(key)
 }
 
@@ -74,7 +74,9 @@ export default function HeritagePage({ mandapId: propMandapId }) {
           <button
             onClick={() => {
               setDocId(null)
-              window.location.hash = selectedMandap ? `#/heritage?id=${selectedMandap}` : '#/heritage'
+              // ২. pushState দিয়ে ক্লিন URL সেট করা হলো
+              const newUrl = selectedMandap ? `/heritage?id=${selectedMandap}` : '/heritage'
+              window.history.pushState({}, '', newUrl)
             }}
             className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-sm font-semibold cursor-pointer"
           >
@@ -99,14 +101,14 @@ export default function HeritagePage({ mandapId: propMandapId }) {
 
         {/* Location & Evolution */}
         <div className="p-6 rounded-2xl bg-white/10 dark:bg-gray-900/40 backdrop-blur-xl border border-white/20 dark:border-gray-800 shadow-xl space-y-3">
-          <h3 className="text-xl font-bold text-orange-500 flex items-center gap-2">🏙 স্থান ও নগরায়ণ প্রকৃতি</h3>
+          <h3 className="text-xl font-bold text-orange-500 flex items-center gap-2">🏙 স্থান ও নগরায়ণ প্রকৃতি</h3>
           {singleDoc.location_changed ? (
             <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-sm text-amber-200">
               <b>⚠️ স্থান পরিবর্তনের বিবরণ:</b>
               <p className="mt-1 leading-relaxed">{singleDoc.location_change_history}</p>
             </div>
           ) : (
-            <p className="text-sm text-gray-300">✅ মণ্ডপটি শুরু থেকেই স্থায়ী নির্ধারিত স্থানে উদযাপিত হচ্ছে।</p>
+            <p className="text-sm text-gray-300">✅ মণ্ডপটি শুরু থেকেই স্থায়ী নির্ধারিত স্থানে উদযাপিত হচ্ছে।</p>
           )}
         </div>
 
@@ -195,7 +197,7 @@ export default function HeritagePage({ mandapId: propMandapId }) {
           <h1 className="text-3xl sm:text-4xl font-extrabold bg-gradient-to-r from-orange-500 via-amber-500 to-rose-500 bg-clip-text text-transparent">
             🏛 হেরিটেজ ও আর্কিটেকচার আর্কাইভ
           </h1>
-          <p className="text-sm text-gray-400 mt-1">মণ্ডপের ইতিহাস, নগরায়ণ ও স্থপতি বিবরণী ব্লগসমূহ</p>
+          <p className="text-sm text-gray-400 mt-1">মণ্ডপের ইতিহাস, নগরায়ণ ও স্থপতি বিবরণী ব্লগসমূহ</p>
         </div>
 
         <button
@@ -216,7 +218,9 @@ export default function HeritagePage({ mandapId: propMandapId }) {
           value={selectedMandap}
           onChange={(e) => {
             setSelectedMandap(e.target.value)
-            window.location.hash = e.target.value ? `#/heritage?id=${e.target.value}` : '#/heritage'
+            // ৩. pushState দিয়ে ক্লিন URL সেট করা হলো
+            const newUrl = e.target.value ? `/heritage?id=${e.target.value}` : '/heritage'
+            window.history.pushState({}, '', newUrl)
           }}
           className="w-full p-3 rounded-xl bg-gray-800 text-white border border-gray-700 focus:outline-none"
         >
@@ -232,7 +236,7 @@ export default function HeritagePage({ mandapId: propMandapId }) {
       {!loading && !allDocs.length && (
         <div className="text-center py-12 px-6 rounded-2xl bg-white/5 border border-gray-800 space-y-4">
           <p className="text-gray-400 text-lg">
-            {selectedMandap ? `${currentMandapObj?.name_bn || currentMandapObj?.name} এর জন্য কোনো আর্কাইভ পাওয়া যায়নি।` : 'কোনো হেরিটেজ পোস্ট পাওয়া যায়নি।'}
+            {selectedMandap ? `${currentMandapObj?.name_bn || currentMandapObj?.name} এর জন্য কোনো আর্কাইভ পাওয়া যায়নি।` : 'কোনো হেরিটেজ পোস্ট পাওয়া যায়নি।'}
           </p>
           <button onClick={() => setShowForm(true)} className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl shadow-lg cursor-pointer">
             প্রথম ব্লগ সাবমিট করুন
@@ -249,7 +253,8 @@ export default function HeritagePage({ mandapId: propMandapId }) {
               key={item.id}
               onClick={() => {
                 setDocId(item.id)
-                window.location.hash = `#/heritage?docId=${item.id}`
+                // ৪. pushState দিয়ে ক্লিন URL সেট করা হলো
+                window.history.pushState({}, '', `/heritage?docId=${item.id}`)
               }}
               className="group bg-white/5 dark:bg-gray-900/60 border border-gray-800 hover:border-orange-500/50 rounded-2xl overflow-hidden shadow-xl transition-all duration-300 hover:-translate-y-1.5 cursor-pointer flex flex-col justify-between"
             >
@@ -276,7 +281,7 @@ export default function HeritagePage({ mandapId: propMandapId }) {
 
               <div className="px-5 pb-5 pt-2 border-t border-gray-800/60 flex justify-between items-center text-xs text-gray-400">
                 <span>লেখক: {item.submitted_by || 'Admin'}</span>
-                <span className="text-orange-500 font-bold group-hover:translate-x-1 transition-transform">পড়ুন →</span>
+                <span className="text-orange-500 font-bold group-hover:translate-x-1 transition-transform">পড়ুন →</span>
               </div>
             </div>
           )
