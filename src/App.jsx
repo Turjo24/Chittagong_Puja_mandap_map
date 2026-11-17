@@ -25,6 +25,7 @@ const Parikroma = lazy(() => import('./Parikroma'))
 const Blog = lazy(() => import('./Blog'))
 const SubmitBlog = lazy(() => import('./SubmitBlog'))
 const MapPage = lazy(() => import('./MapPage'))
+
 const hav = (a, b) => {
   const r = (x) => (x * Math.PI) / 180, dLat = r(b.lat - a.lat), dLng = r(b.lng - a.lng)
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dLng / 2) ** 2
@@ -43,12 +44,18 @@ export default function App() {
   // ১. ফিক্স: location.hash এর বদলে window.location.pathname
   const [route, setRoute] = useState(window.location.pathname) 
   
-  // ২. ফিক্স: ইন্ট্রো পেজের লজিক থেকে হ্যাশ চেকিং বাদ দেওয়া হয়েছে
+  // ২. ফিক্স: ইন্ট্রো পেজের লজিক থেকে হ্যাশ চেকিং বাদ দেওয়া হয়েছে
   const [loaded, setLoaded] = useState(false)
   const [intro, setIntro] = useState(!sessionStorage.getItem('intro') && window.location.pathname === '/' && !new URLSearchParams(window.location.search).has('m'))
   const t = T[lang]
 
-  // ৩. ফিক্স: hashchange ইভেন্টের বদলে popstate ইভেন্ট ব্যবহার করা হয়েছে
+  // স্কিপ ইন্ট্রো ফাংশন
+  const skipIntro = () => {
+    sessionStorage.setItem('intro', '1')
+    setIntro(false)
+  }
+
+  // ৩. ফিক্স: hashchange ইভেন্টের বদলে popstate ইভেন্ট ব্যবহার করা হয়েছে
   useEffect(() => { 
     const f = () => setRoute(window.location.pathname); 
     window.addEventListener('popstate', f); 
@@ -70,14 +77,14 @@ export default function App() {
       }
 
       const urlParams = new URLSearchParams(window.location.search)
-        const mParam = urlParams.get('m')
-        if (mParam && data) {
-          const target = data.find(x => x.slug === mParam || x.id == mParam)
-          if (target) {
-            setSel(target)
-            setFocus({ id: target.id, lat: target.lat, lng: target.lng, zoom: 17, ts: Date.now() })
-          }
+      const mParam = urlParams.get('m')
+      if (mParam && data) {
+        const target = data.find(x => x.slug === mParam || x.id == mParam)
+        if (target) {
+          setSel(target)
+          setFocus({ id: target.id, lat: target.lat, lng: target.lng, zoom: 17, ts: Date.now() })
         }
+      }
       setLoaded(true) // error hole o intro atke thakbe na
 
       const { data: ph, error: phErr } = await sb
@@ -158,7 +165,37 @@ export default function App() {
   return (
     <>
       <Live />
-      {intro && <Intro ready={loaded} t={t} onEnter={() => window.dispatchEvent(new Event('startmusic'))} onDone={() => { sessionStorage.setItem('intro', '1'); setIntro(false) }} />}
+      {intro && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 99999 }}>
+          {/* Skip Button */}
+          <button 
+            onClick={skipIntro}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              padding: '8px 16px',
+              backgroundColor: 'rgba(0, 0, 0, 0.6)',
+              color: 'white',
+              border: '1px solid rgba(255,255,255,0.3)',
+              borderRadius: '20px',
+              cursor: 'pointer',
+              zIndex: 100000,
+              fontSize: '14px',
+              backdropFilter: 'blur(4px)'
+            }}
+          >
+            Skip ⏭
+          </button>
+          
+          <Intro 
+            ready={loaded} 
+            t={t} 
+            onEnter={() => window.dispatchEvent(new Event('startmusic'))} 
+            onDone={skipIntro} 
+          />
+        </div>
+      )}
       <header className="top">
         <div className="brand">
           <div className="logo"><Flame /></div>

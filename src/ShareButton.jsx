@@ -12,7 +12,7 @@ export default function ShareButton({ m, kind = 'm', title }) {
 
   // ২. ডায়নামিক কার্ডের জন্য API URL (যা ফেসবুক/হোয়াটসঅ্যাপে প্রিভিউ বানাবে)
   const placeName = title || m.mandaps?.name_bn || m.mandaps?.name || m.name_bn || m.name || 'Mandap'
-  const imageUrl = m.pandal_architect_photo || m.entry_point_photo || m.exit_point_photo || m.url || `${origin}/pintro.png`
+  const imageUrl = m.thumbnail_post || m.pandal_architect_photo || m.entry_point_photo || m.exit_point_photo || m.url || `${origin}/pintro.png`
   
   const type = kind === 'heritage' ? 'heritage' : kind === 'b' ? 'blog' : 'm'
   const docId = m.id || m.mandap_id
