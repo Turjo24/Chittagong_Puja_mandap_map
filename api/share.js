@@ -4,9 +4,11 @@
 // Eta ekta PUBLIC page: crawler (Facebook, Prothom Alo er link preview, WhatsApp...) ar manush,
 // dujon-i ekhi HTML dekhe. Kono redirect / intro page nai, tai thumbnail ar content dujon-i thik thake.
 
+import { buildShareCard, originFrom } from '../shared/shareCard.js'
+
 const ORIGIN = (process.env.SITE_ORIGIN || 'https://ctgpujamandap.vercel.app').replace(/\/$/, '')
 const SITE = 'Chattogram Puja Mandap Guide'
-const DEFAULT_IMAGE = `${ORIGIN}/pintro.png` // public/pintro.png thakte hobe (1200x630 bhalo)
+const DEFAULT_IMAGE = `${ORIGIN}/pntro.png` // public/pntro.png thakte hobe (1200x630 bhalo)
 
 const esc = (s = '') =>
   String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
@@ -260,52 +262,10 @@ function notFound(res) {
 }
 
 export default function handler(req, res) {
-  const { type, id, title, img } = req.query;
-
-  // মানুষ ক্লিক করলে আসল যে লিংকে যাবে, সেটা তৈরি করছি
-  let redirectUrl = `https://ctgpujamandap.vercel.app/?m=${id}`;
-  
-  if (type === 'heritage') {
-    redirectUrl = `https://ctgpujamandap.vercel.app/heritage?docId=${id}`;
-  } else if (type === 'blog') {
-    redirectUrl = `https://ctgpujamandap.vercel.app/blog?id=${id}`;
-  }
-
-  // ডিকোড করা ডেটা
-  const decodedTitle = decodeURIComponent(title || 'Mandap');
-
-  const decodedImg = decodeURIComponent(img || '') || 'https://ctgpujamandap.vercel.app/pntro.png';
-
-  // Facebook/WhatsApp-কে বোঝানোর জন্য মেটা ট্যাগ (HTML) পাঠাচ্ছি এবং সাথে সাথে রিডাইরেক্ট করে দিচ্ছি
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.status(200).send(`
-    <!DOCTYPE html>
-    <html lang="bn">
-      <head>
-        <meta charset="utf-8" />
-        <title>${decodedTitle} — Chattogram Puja Mandap Guide</title>
-        
-        <!-- Open Graph / Facebook / WhatsApp (এই ট্যাগগুলোই কার্ড তৈরি করবে) -->
-        <meta property="og:type" content="website" />
-       <meta property="og:url" content="https://ctgpujamandap.vercel.app/api/share?type=${type}&id=${id}&title=${title}&img=${img}" />
-        <meta property="og:title" content="${decodedTitle} — Chattogram Puja Mandap Guide" />
-        <meta property="og:description" content="মণ্ডপ বা হেরিটেজ সম্পর্কে বিস্তারিত জানতে লিংকে ক্লিক করুন।" />
-        <meta property="og:image" content="${decodedImg}" />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        
-        <!-- Twitter / X -->
-        <meta property="twitter:card" content="summary_large_image" />
-        <meta property="twitter:title" content="${decodedTitle} — Chattogram Puja Mandap Guide" />
-        <meta property="twitter:image" content="${decodedImg}" />
-        <script>
-          window.location.replace("${redirectUrl}");
-        </script>
-      </head>
-      <body style="background-color: #f3f4f6; text-align: center; padding-top: 50px; font-family: sans-serif;">
-        <p>আপনাকে <b>${decodedTitle}</b>-এর পেজে নিয়ে যাওয়া হচ্ছে...</p>
-        <p><a href="${redirectUrl}" style="color: #0066cc;">যদি নিজে থেকে না যায়, তাহলে এখানে ক্লিক করুন</a></p>
-      </body>
-    </html>
-  `);
+  // Origin follows SITE_ORIGIN (if set) or the host the request came in on, so the same code works
+  // on the vercel.app URL and on a custom domain later.
+  const origin = originFrom(process.env.SITE_ORIGIN, req.headers['x-forwarded-host'] || req.headers.host)
+  res.setHeader('Content-Type', 'text/html; charset=utf-8')
+  res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400')
+  res.status(200).send(buildShareCard(req.query, origin))
 }

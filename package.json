@@ -9,6 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/cormorant-garamond": "^5.3.0",
+    "@fontsource/hind-siliguri": "^5.3.0",
+    "@fontsource/noto-serif-bengali": "^5.3.0",
     "@supabase/supabase-js": "^2.45.0",
     "@tailwindcss/vite": "^4.3.3",
     "@vercel/speed-insights": "^2.0.0",
