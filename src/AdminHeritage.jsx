@@ -5,17 +5,18 @@ import { check, uploadAll } from './upload'
 
 /* ───────────────────────── কমন স্টাইল ও লেবেল ───────────────────────── */
 
-const LOCATION_LABELS = {
+export const LOCATION_LABELS = {
   open_field: 'উন্মুক্ত মাঠ / প্রাঙ্গণ',
   building_under: 'বিল্ডিংয়ের নিচে / নিচতলা',
   temporary_pandal: 'অস্থায়ী মণ্ডপ (রাস্তায়/গলি)',
   permanent_premises: 'স্থায়ী মন্দির প্রাঙ্গণ'
 }
 
+// সব কিছু সাদা বক্স + গাঢ় বর্ডার + কালো লেখা, যাতে পরিষ্কার বোঝা যায়
 const inp =
-  'w-full p-2.5 rounded-xl bg-gray-800 border border-gray-700 text-sm text-gray-100 outline-none focus:border-orange-500 placeholder:text-gray-500'
-const lbl = 'text-xs font-bold text-gray-400 block mb-1'
-const box = 'p-4 rounded-xl border border-gray-800 bg-gray-900/60 space-y-3'
+  'w-full p-2.5 rounded-xl bg-white border border-slate-400 text-sm text-neutral-900 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 placeholder:text-slate-400'
+const lbl = 'text-xs font-bold text-slate-700 block mb-1'
+const box = 'p-4 rounded-xl border-2 border-slate-300 border-l-8 bg-white shadow-sm space-y-3 text-neutral-900'
 
 const BLANK = {
   mandap_id: '',
@@ -39,7 +40,20 @@ const BLANK = {
   exit_point_photo: null,
   thumbnail_post: null,
   heritage_description: '',
-  submitted_by: 'Admin'
+  submitted_by: 'Admin',
+  submitter_email: ''
+}
+
+/* ───────────────────── ছবি বড় করে দেখা (Admin.jsx থেকেও ব্যবহার হয়) ───────────────────── */
+
+export function Lightbox({ src, onClose }) {
+  if (!src) return null
+  return (
+    <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 cursor-zoom-out" onClick={onClose}>
+      <img src={src} alt="" className="max-w-full max-h-full object-contain rounded-lg" />
+      <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white text-black font-bold cursor-pointer">✕</button>
+    </div>
+  )
 }
 
 /* ───────────────────── একটি ছবির স্লট (দেখা / পরিবর্তন / মুছা) ───────────────────── */
@@ -67,16 +81,16 @@ function ImageSlot({ label, hint, url, onChange, onZoom }) {
   }, [files])
 
   return (
-    <div className="p-3 rounded-xl bg-gray-800/60 border border-gray-700 space-y-2">
-      <div className="text-xs font-bold text-gray-300">{label}</div>
-      <div className="relative w-full h-32 rounded-lg overflow-hidden bg-gray-900 border border-gray-700 flex items-center justify-center">
+    <div className="p-3 rounded-xl bg-slate-50 border-2 border-slate-300 space-y-2">
+      <div className="text-xs font-bold text-slate-800">{label}</div>
+      <div className="relative w-full h-32 rounded-lg overflow-hidden bg-white border border-slate-300 flex items-center justify-center">
         {url ? (
           <img src={url} alt="" onClick={() => onZoom?.(url)} className="w-full h-full object-cover cursor-zoom-in" />
         ) : (
-          <span className="text-xs text-gray-500">ছবি নেই</span>
+          <span className="text-xs text-slate-500">ছবি নেই</span>
         )}
         {up && (
-          <div className="absolute inset-0 bg-black/70 flex items-center justify-center text-xs text-amber-300 animate-pulse">
+          <div className="absolute inset-0 bg-white/80 flex items-center justify-center text-xs text-amber-700 font-bold animate-pulse">
             আপলোড হচ্ছে…
           </div>
         )}
@@ -86,12 +100,12 @@ function ImageSlot({ label, hint, url, onChange, onZoom }) {
         <button
           type="button"
           onClick={() => onChange(null)}
-          className="w-full px-2 py-1.5 rounded-lg bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-bold cursor-pointer"
+          className="w-full px-2 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold cursor-pointer"
         >
           🗑 এই ছবি মুছে ফেলুন
         </button>
       )}
-      {hint && <p className="text-[10px] text-gray-500">{hint}</p>}
+      {hint && <p className="text-[10px] text-slate-500">{hint}</p>}
     </div>
   )
 }
@@ -122,7 +136,7 @@ function AlbumUploader({ onAdd }) {
   return (
     <div className="space-y-1">
       <PhotoPicker files={files} setFiles={setFiles} label="➕ অ্যালবামে নতুন ছবি যোগ করুন (একাধিক)" />
-      {up && <p className="text-xs text-amber-300 animate-pulse">ছবি আপলোড হচ্ছে…</p>}
+      {up && <p className="text-xs text-amber-700 font-bold animate-pulse">ছবি আপলোড হচ্ছে…</p>}
     </div>
   )
 }
@@ -131,13 +145,13 @@ function AlbumUploader({ onAdd }) {
 
 function SectionEditor({ sec, index, total, onChange, onMove, onRemove, onZoom }) {
   return (
-    <div className="p-3 rounded-xl bg-gray-800/50 border border-gray-700 space-y-2">
+    <div className="p-3 rounded-xl bg-emerald-50 border-2 border-emerald-300 space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-bold text-emerald-400">সেকশন {index + 1}</span>
+        <span className="text-xs font-bold text-emerald-800">সেকশন {index + 1}</span>
         <div className="flex gap-1">
-          <button type="button" disabled={index === 0} onClick={() => onMove(index, -1)} className="px-2 py-1 rounded bg-gray-700 text-xs disabled:opacity-30 cursor-pointer">↑</button>
-          <button type="button" disabled={index === total - 1} onClick={() => onMove(index, 1)} className="px-2 py-1 rounded bg-gray-700 text-xs disabled:opacity-30 cursor-pointer">↓</button>
-          <button type="button" onClick={() => onRemove(index)} className="px-2 py-1 rounded bg-rose-600/80 hover:bg-rose-600 text-xs font-bold cursor-pointer">✕ মুছুন</button>
+          <button type="button" disabled={index === 0} onClick={() => onMove(index, -1)} className="px-2 py-1 rounded bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs disabled:opacity-30 cursor-pointer">↑</button>
+          <button type="button" disabled={index === total - 1} onClick={() => onMove(index, 1)} className="px-2 py-1 rounded bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs disabled:opacity-30 cursor-pointer">↓</button>
+          <button type="button" onClick={() => onRemove(index)} className="px-2 py-1 rounded bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold cursor-pointer">✕ মুছুন</button>
         </div>
       </div>
       <input className={inp} placeholder="সেকশনের শিরোনাম" value={sec.title || ''} onChange={(e) => onChange(index, { ...sec, title: e.target.value })} />
@@ -161,7 +175,7 @@ function DocEditor({ mode, doc, existingAlbums, mandapList, onSaved, onCancel, n
     return f
   })
   const [sections, setSections] = useState(() => (Array.isArray(doc?.custom_sections) ? doc.custom_sections.map((s) => ({ ...s })) : []))
-  const [oldAlbum, setOldAlbum] = useState(existingAlbums || [])
+  const [oldAlbum] = useState(existingAlbums || [])
   const [removedIds, setRemovedIds] = useState([])
   const [newAlbum, setNewAlbum] = useState([])
   const [busy, setBusy] = useState(false)
@@ -207,6 +221,7 @@ function DocEditor({ mode, doc, existingAlbums, mandapList, onSaved, onCancel, n
         thumbnail_post: form.thumbnail_post || null,
         heritage_description: (form.heritage_description || '').trim() || null,
         submitted_by: (form.submitted_by || '').trim() || 'Admin',
+        submitter_email: (form.submitter_email || '').trim() || null,
         custom_sections: sections
           .filter((s) => (s.title || '').trim() || (s.content || '').trim() || s.image_url)
           .map((s) => ({ title: (s.title || '').trim(), content: (s.content || '').trim(), image_url: s.image_url || null }))
@@ -248,8 +263,8 @@ function DocEditor({ mode, doc, existingAlbums, mandapList, onSaved, onCancel, n
   return (
     <div className="space-y-5">
       {/* ১. মূল তথ্য */}
-      <div className={box}>
-        <h4 className="font-bold text-amber-400">১. মূল তথ্য</h4>
+      <div className={`${box} border-l-amber-500`}>
+        <h4 className="font-bold text-amber-800">১. মূল তথ্য</h4>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className={lbl}>মণ্ডপ *</label>
@@ -271,20 +286,24 @@ function DocEditor({ mode, doc, existingAlbums, mandapList, onSaved, onCancel, n
             <input type="number" className={inp} value={form.year} onChange={(e) => set('year', e.target.value)} />
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="sm:col-span-1">
-            <label className={lbl}>সংগ্রাহক / জমা দাতা</label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className={lbl}>সংগ্রাহক / জমা দাতার নাম</label>
             <input className={inp} value={form.submitted_by} onChange={(e) => set('submitted_by', e.target.value)} />
           </div>
-          <div className="sm:col-span-1 max-w-sm">
-            <ImageSlot label="🖼 থাম্বনেইল পোস্ট (কার্ড ও প্রচ্ছদে দেখাবে)" hint="প্রস্তাবিত: স্কয়ার ১২০০×১২০০" url={form.thumbnail_post} onChange={(u) => set('thumbnail_post', u)} onZoom={onZoom} />
+          <div>
+            <label className={lbl}>জমা দাতার ইমেইল (Optional)</label>
+            <input type="email" className={inp} placeholder="example@mail.com" value={form.submitter_email} onChange={(e) => set('submitter_email', e.target.value)} />
           </div>
+        </div>
+        <div className="max-w-sm">
+          <ImageSlot label="🖼 থাম্বনেইল পোস্ট (কার্ড ও প্রচ্ছদে দেখাবে)" hint="প্রস্তাবিত: স্কয়ার ১২০০×১২০০" url={form.thumbnail_post} onChange={(u) => set('thumbnail_post', u)} onZoom={onZoom} />
         </div>
       </div>
 
       {/* ২. স্থান */}
-      <div className={box}>
-        <h4 className="font-bold text-amber-400">২. স্থান ও স্থানান্তর</h4>
+      <div className={`${box} border-l-sky-500`}>
+        <h4 className="font-bold text-sky-800">২. স্থান ও স্থানান্তর</h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className={lbl}>স্থানের প্রকৃতি</label>
@@ -294,7 +313,7 @@ function DocEditor({ mode, doc, existingAlbums, mandapList, onSaved, onCancel, n
               ))}
             </select>
           </div>
-          <label className="flex items-center gap-2 pt-6 text-sm cursor-pointer">
+          <label className="flex items-center gap-2 pt-6 text-sm font-medium text-slate-800 cursor-pointer">
             <input type="checkbox" className="w-5 h-5 accent-orange-500" checked={!!form.location_changed} onChange={(e) => set('location_changed', e.target.checked)} />
             এই বছর স্থান পরিবর্তন হয়েছিল?
           </label>
@@ -309,8 +328,8 @@ function DocEditor({ mode, doc, existingAlbums, mandapList, onSaved, onCancel, n
       </div>
 
       {/* ৩. কারিগর */}
-      <div className={box}>
-        <h4 className="font-bold text-amber-400">৩. নেপথ্যের শিল্পী ও কারিগর (নাম ও ছবি)</h4>
+      <div className={`${box} border-l-violet-500`}>
+        <h4 className="font-bold text-violet-800">৩. নেপথ্যের শিল্পী ও কারিগর (নাম ও ছবি)</h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {[
             ['pandal_architect', 'মণ্ডপ আর্কিটেক্ট'],
@@ -326,8 +345,8 @@ function DocEditor({ mode, doc, existingAlbums, mandapList, onSaved, onCancel, n
       </div>
 
       {/* ৪. প্রতিমা */}
-      <div className={box}>
-        <h4 className="font-bold text-amber-400">৪. প্রতিমা ও থিম</h4>
+      <div className={`${box} border-l-rose-500`}>
+        <h4 className="font-bold text-rose-800">৪. প্রতিমা ও থিম</h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <input type="number" className={inp} placeholder="প্রতিমার উচ্চতা (ফুট)" value={form.statue_height_ft} onChange={(e) => set('statue_height_ft', e.target.value)} />
           <input className={inp} placeholder="প্রতিমার থিম / মূল ভাবনা" value={form.statue_theme} onChange={(e) => set('statue_theme', e.target.value)} />
@@ -335,8 +354,8 @@ function DocEditor({ mode, doc, existingAlbums, mandapList, onSaved, onCancel, n
       </div>
 
       {/* ৫. সার্কুলেশন */}
-      <div className={box}>
-        <h4 className="font-bold text-amber-400">৫. প্রবেশ ও প্রস্থান পথ</h4>
+      <div className={`${box} border-l-teal-500`}>
+        <h4 className="font-bold text-teal-800">৫. প্রবেশ ও প্রস্থান পথ</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="space-y-2">
             <textarea rows={2} className={inp} placeholder="🟢 প্রবেশ পথের বর্ণনা" value={form.entry_point} onChange={(e) => set('entry_point', e.target.value)} />
@@ -350,16 +369,16 @@ function DocEditor({ mode, doc, existingAlbums, mandapList, onSaved, onCancel, n
       </div>
 
       {/* ৬. হেরিটেজ বর্ণনা */}
-      <div className={box}>
-        <h4 className="font-bold text-amber-400">৬. হেরিটেজ বর্ণনা (বিস্তারিত)</h4>
+      <div className={`${box} border-l-orange-500`}>
+        <h4 className="font-bold text-orange-800">৬. হেরিটেজ বর্ণনা (বিস্তারিত)</h4>
         <textarea rows={8} className={`${inp} resize-y`} placeholder="ইতিহাস, ঐতিহ্য, রীতিনীতি, স্মৃতি..." value={form.heritage_description} onChange={(e) => set('heritage_description', e.target.value)} />
-        <p className="text-[11px] text-gray-500 text-right">{(form.heritage_description || '').length} অক্ষর</p>
+        <p className="text-[11px] text-slate-500 text-right">{(form.heritage_description || '').length} অক্ষর</p>
       </div>
 
-      {/* ৭. কাস্টম সেকশন */}
-      <div className={box}>
-        <div className="flex items-center justify-between">
-          <h4 className="font-bold text-emerald-400">🧩 ৭. কাস্টম সেকশন ({sections.length})</h4>
+      {/* ৭. কাস্টম সেকশন (শুধু অ্যাডমিনের এক্সট্রা ক্ষমতা) */}
+      <div className={`${box} border-l-emerald-500`}>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <h4 className="font-bold text-emerald-800">🧩 ৭. কাস্টম সেকশন ({sections.length}) — নিজের মতো নতুন সেকশন যোগ করুন</h4>
           <button
             type="button"
             onClick={() => setSections((a) => [...a, { title: '', content: '', image_url: null }])}
@@ -368,15 +387,15 @@ function DocEditor({ mode, doc, existingAlbums, mandapList, onSaved, onCancel, n
             + নতুন সেকশন
           </button>
         </div>
-        {!sections.length && <p className="text-xs text-gray-500">কোনো কাস্টম সেকশন নেই।</p>}
+        {!sections.length && <p className="text-xs text-slate-500">কোনো কাস্টম সেকশন নেই।</p>}
         {sections.map((s, i) => (
           <SectionEditor key={i} sec={s} index={i} total={sections.length} onChange={changeSection} onMove={moveSection} onRemove={removeSection} onZoom={onZoom} />
         ))}
       </div>
 
       {/* ৮. ফটো অ্যালবাম */}
-      <div className={box}>
-        <h4 className="font-bold text-amber-400">
+      <div className={`${box} border-l-indigo-500`}>
+        <h4 className="font-bold text-indigo-800">
           🖼 ৮. ফটো অ্যালবাম ({oldAlbum.length - removedIds.length + newAlbum.length}টি ছবি)
         </h4>
         {(oldAlbum.length > 0 || newAlbum.length > 0) && (
@@ -384,12 +403,12 @@ function DocEditor({ mode, doc, existingAlbums, mandapList, onSaved, onCancel, n
             {oldAlbum.map((a) => {
               const removed = removedIds.includes(a.id)
               return (
-                <div key={a.id} className={`relative rounded-lg overflow-hidden border ${removed ? 'border-rose-500 opacity-40' : 'border-gray-700'}`}>
+                <div key={a.id} className={`relative rounded-lg overflow-hidden border-2 ${removed ? 'border-rose-500 opacity-40' : 'border-slate-300'}`}>
                   <img src={a.image_url} alt="" onClick={() => onZoom(a.image_url)} className="w-full h-24 object-cover cursor-zoom-in" />
                   <button
                     type="button"
                     onClick={() => setRemovedIds((ids) => (removed ? ids.filter((x) => x !== a.id) : [...ids, a.id]))}
-                    className={`absolute top-1 right-1 px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer ${removed ? 'bg-emerald-600' : 'bg-rose-600'}`}
+                    className={`absolute top-1 right-1 px-1.5 py-0.5 rounded text-[10px] font-bold text-white cursor-pointer ${removed ? 'bg-emerald-600' : 'bg-rose-600'}`}
                   >
                     {removed ? '↺ ফেরান' : '✕'}
                   </button>
@@ -397,13 +416,13 @@ function DocEditor({ mode, doc, existingAlbums, mandapList, onSaved, onCancel, n
               )
             })}
             {newAlbum.map((u, i) => (
-              <div key={u.url} className="relative rounded-lg overflow-hidden border border-emerald-500">
+              <div key={u.url} className="relative rounded-lg overflow-hidden border-2 border-emerald-500">
                 <img src={u.url} alt="" onClick={() => onZoom(u.url)} className="w-full h-24 object-cover cursor-zoom-in" />
-                <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-emerald-600 text-[10px] font-bold">নতুন</span>
+                <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-bold">নতুন</span>
                 <button
                   type="button"
                   onClick={() => setNewAlbum((arr) => arr.filter((_, j) => j !== i))}
-                  className="absolute top-1 right-1 px-1.5 py-0.5 rounded bg-rose-600 text-[10px] font-bold cursor-pointer"
+                  className="absolute top-1 right-1 px-1.5 py-0.5 rounded bg-rose-600 text-white text-[10px] font-bold cursor-pointer"
                 >
                   ✕
                 </button>
@@ -412,8 +431,8 @@ function DocEditor({ mode, doc, existingAlbums, mandapList, onSaved, onCancel, n
           </div>
         )}
         <AlbumUploader onAdd={(uploaded) => setNewAlbum((arr) => [...arr, ...uploaded])} />
-        <p className="text-[11px] text-gray-500">লাল ✕ চাপলে ছবিটি মুছে ফেলার জন্য চিহ্নিত হবে; "সেভ" চাপলে তবেই আসলে মুছবে।</p>
-        <p className="text-[10px] text-gray-500">{photoHint}</p>
+        <p className="text-[11px] text-slate-500">লাল ✕ চাপলে ছবিটি মুছে ফেলার জন্য চিহ্নিত হবে; "সেভ" চাপলে তবেই আসলে মুছবে।</p>
+        <p className="text-[10px] text-slate-500">{photoHint}</p>
       </div>
 
       {/* অ্যাকশন */}
@@ -436,7 +455,7 @@ function DocEditor({ mode, doc, existingAlbums, mandapList, onSaved, onCancel, n
             ✓ সেভ ও অ্যাপ্রুভ
           </button>
         )}
-        <button type="button" disabled={busy} onClick={onCancel} className="px-5 py-2.5 rounded-xl bg-gray-700 hover:bg-gray-600 text-white font-bold text-sm cursor-pointer">
+        <button type="button" disabled={busy} onClick={onCancel} className="px-5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-900 font-bold text-sm cursor-pointer">
           বাতিল
         </button>
       </div>
@@ -445,15 +464,16 @@ function DocEditor({ mode, doc, existingAlbums, mandapList, onSaved, onCancel, n
 }
 
 /* ───────────────────── একটি ডকুমেন্টের কার্ড (সব ছবি যাচাই করার প্রিভিউ) ───────────────────── */
+/* Admin.jsx এর ড্যাশবোর্ডেও এই কার্ডটাই ব্যবহার হয় */
 
 const Info = ({ k, v }) =>
   v ? (
-    <p className="text-sm text-gray-300 leading-relaxed">
-      <b className="text-gray-400">{k}:</b> {v}
+    <p className="text-sm text-slate-800 leading-relaxed">
+      <b className="text-slate-600">{k}:</b> {v}
     </p>
   ) : null
 
-function DocCard({ doc, albums, kind, onApprove, onEdit, onDelete, onUnpublish, onZoom }) {
+export function DocCard({ doc, albums = [], kind, onApprove, onEdit, onDelete, onUnpublish, onZoom }) {
   const [open, setOpen] = useState(kind === 'pending') // পেন্ডিং হলে সব খোলা, যাতে অ্যাডমিন সরাসরি যাচাই করতে পারে
   const mName = doc.mandaps?.name_bn || doc.mandaps?.name || ''
 
@@ -467,51 +487,55 @@ function DocCard({ doc, albums, kind, onApprove, onEdit, onDelete, onUnpublish, 
   ]
   const sections = Array.isArray(doc.custom_sections) ? doc.custom_sections : []
   const photoCount = slots.filter((s) => s[1]).length + albums.length + sections.filter((s) => s.image_url).length
+  const accent = kind === 'pending' ? 'border-l-amber-500' : 'border-l-emerald-500'
+  const mailHref = doc.submitter_email
+    ? `mailto:${doc.submitter_email}?subject=${encodeURIComponent('Puja Map: apnar heritage nothi approve hoyeche')}&body=${encodeURIComponent('Dhonnobad! Apnar heritage nothi website e live hoyeche.')}`
+    : null
 
   return (
-    <div className="p-5 rounded-2xl bg-gray-900 border border-gray-800 space-y-4">
+    <div className={`p-5 rounded-2xl bg-white text-neutral-900 border-2 border-slate-300 border-l-8 ${accent} shadow-md space-y-4`}>
       <div className="flex gap-4 items-start flex-wrap">
         {doc.thumbnail_post ? (
-          <img src={doc.thumbnail_post} alt="" onClick={() => onZoom(doc.thumbnail_post)} className="w-24 h-24 rounded-xl object-cover cursor-zoom-in border border-gray-700" />
+          <img src={doc.thumbnail_post} alt="" onClick={() => onZoom?.(doc.thumbnail_post)} className="w-24 h-24 rounded-xl object-cover cursor-zoom-in border-2 border-slate-300" />
         ) : (
-          <div className="w-24 h-24 rounded-xl bg-orange-500/10 border border-dashed border-orange-500/40 flex items-center justify-center text-xs text-orange-300 text-center p-1">থাম্বনেইল নেই</div>
+          <div className="w-24 h-24 rounded-xl bg-orange-50 border-2 border-dashed border-orange-300 flex items-center justify-center text-xs text-orange-700 text-center p-1">থাম্বনেইল নেই</div>
         )}
         <div className="flex-1 min-w-[200px]">
-          <h4 className="text-lg font-bold text-orange-400">{doc.title || `${mName} (${doc.year})`}</h4>
-          <p className="text-xs text-gray-400">
+          <h4 className="text-lg font-bold text-neutral-900">{doc.title || `${mName} (${doc.year})`}</h4>
+          <p className="text-xs text-slate-600">
             {mName} · {doc.year} সাল · জমা: {doc.submitted_by || 'Admin'}
             {doc.submitter_email ? ` (${doc.submitter_email})` : ''} · {new Date(doc.created_at).toLocaleDateString('bn-BD')}
           </p>
           <div className="flex flex-wrap gap-2 mt-2 text-[11px]">
-            <span className="px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300">📷 মোট ছবি: {photoCount}</span>
-            {!doc.heritage_description && <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300">⚠ বর্ণনা নেই</span>}
-            {!doc.thumbnail_post && <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300">⚠ থাম্বনেইল নেই</span>}
+            <span className="px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 font-semibold">📷 মোট ছবি: {photoCount}</span>
+            {!doc.heritage_description && <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold">⚠ বর্ণনা নেই</span>}
+            {!doc.thumbnail_post && <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold">⚠ থাম্বনেইল নেই</span>}
           </div>
         </div>
-        <button onClick={() => setOpen((o) => !o)} className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-xs font-bold cursor-pointer">
+        <button onClick={() => setOpen((o) => !o)} className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-900 text-xs font-bold cursor-pointer">
           {open ? '▲ গুটিয়ে নিন' : '▼ সব তথ্য ও ছবি দেখুন'}
         </button>
       </div>
 
       {open && (
-        <div className="space-y-4 pt-2 border-t border-gray-800">
+        <div className="space-y-4 pt-3 border-t-2 border-dashed border-slate-300">
           {/* প্রধান ছবিগুলো */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
             {slots.map(([t, url, name]) => (
               <div key={t} className="text-center">
                 {url ? (
-                  <img src={url} alt="" onClick={() => onZoom(url)} className="w-full h-24 object-cover rounded-lg border border-gray-700 cursor-zoom-in" />
+                  <img src={url} alt="" onClick={() => onZoom?.(url)} className="w-full h-24 object-cover rounded-lg border-2 border-slate-300 cursor-zoom-in" />
                 ) : (
-                  <div className="w-full h-24 rounded-lg border border-dashed border-gray-700 flex items-center justify-center text-[11px] text-gray-500">নেই</div>
+                  <div className="w-full h-24 rounded-lg border-2 border-dashed border-slate-300 flex items-center justify-center text-[11px] text-slate-500">নেই</div>
                 )}
-                <div className="text-[11px] text-gray-400 mt-1">{t}</div>
-                {name && <div className="text-[11px] font-semibold text-gray-200 truncate">{name}</div>}
+                <div className="text-[11px] text-slate-600 mt-1">{t}</div>
+                {name && <div className="text-[11px] font-semibold text-slate-900 truncate">{name}</div>}
               </div>
             ))}
           </div>
 
           {/* লেখা */}
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 p-3 rounded-xl bg-slate-50 border border-slate-300">
             <Info k="স্থানের প্রকৃতি" v={LOCATION_LABELS[doc.location_type]} />
             {doc.location_changed && <Info k="স্থান পরিবর্তনের বিবরণ" v={doc.location_change_history} />}
             <Info k="পূজা-পরবর্তী স্থানের অবস্থা" v={doc.post_puja_site_status} />
@@ -522,21 +546,21 @@ function DocCard({ doc, albums, kind, onApprove, onEdit, onDelete, onUnpublish, 
           </div>
 
           {doc.heritage_description && (
-            <div className="p-3 rounded-xl bg-gray-800/60 border border-gray-700">
-              <div className="text-xs font-bold text-orange-400 mb-1">হেরিটেজ বর্ণনা</div>
-              <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-line max-h-48 overflow-y-auto">{doc.heritage_description}</p>
+            <div className="p-3 rounded-xl bg-orange-50 border-2 border-orange-200">
+              <div className="text-xs font-bold text-orange-800 mb-1">হেরিটেজ বর্ণনা</div>
+              <p className="text-sm text-slate-900 leading-relaxed whitespace-pre-line max-h-48 overflow-y-auto">{doc.heritage_description}</p>
             </div>
           )}
 
           {sections.length > 0 && (
             <div className="space-y-2">
-              <div className="text-xs font-bold text-emerald-400">কাস্টম সেকশন ({sections.length})</div>
+              <div className="text-xs font-bold text-emerald-800">কাস্টম সেকশন ({sections.length})</div>
               {sections.map((s, i) => (
-                <div key={i} className="p-3 rounded-xl bg-gray-800/60 border border-gray-700 flex gap-3">
-                  {s.image_url && <img src={s.image_url} alt="" onClick={() => onZoom(s.image_url)} className="w-20 h-20 rounded-lg object-cover cursor-zoom-in shrink-0" />}
+                <div key={i} className="p-3 rounded-xl bg-emerald-50 border-2 border-emerald-200 flex gap-3">
+                  {s.image_url && <img src={s.image_url} alt="" onClick={() => onZoom?.(s.image_url)} className="w-20 h-20 rounded-lg object-cover cursor-zoom-in shrink-0" />}
                   <div className="text-sm">
-                    <b className="text-gray-100">{s.title || 'Untitled'}</b>
-                    <p className="text-gray-300 whitespace-pre-line line-clamp-4">{s.content}</p>
+                    <b className="text-neutral-900">{s.title || 'Untitled'}</b>
+                    <p className="text-slate-800 whitespace-pre-line line-clamp-4">{s.content}</p>
                   </div>
                 </div>
               ))}
@@ -545,10 +569,10 @@ function DocCard({ doc, albums, kind, onApprove, onEdit, onDelete, onUnpublish, 
 
           {albums.length > 0 && (
             <div>
-              <div className="text-xs font-bold text-amber-400 mb-2">ফটো অ্যালবাম ({albums.length}টি)</div>
+              <div className="text-xs font-bold text-indigo-800 mb-2">ফটো অ্যালবাম ({albums.length}টি)</div>
               <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-8 gap-2">
                 {albums.map((a) => (
-                  <img key={a.id} src={a.image_url} alt="" onClick={() => onZoom(a.image_url)} className="w-full h-20 object-cover rounded-lg border border-gray-700 cursor-zoom-in" />
+                  <img key={a.id} src={a.image_url} alt="" onClick={() => onZoom?.(a.image_url)} className="w-full h-20 object-cover rounded-lg border-2 border-slate-300 cursor-zoom-in" />
                 ))}
               </div>
             </div>
@@ -558,17 +582,26 @@ function DocCard({ doc, albums, kind, onApprove, onEdit, onDelete, onUnpublish, 
 
       {/* অ্যাকশন বাটন */}
       <div className="flex flex-wrap gap-2 pt-1">
-        {kind === 'pending' && (
-          <button onClick={() => onApprove(doc.id)} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 font-bold rounded-xl text-sm cursor-pointer">✓ Approve</button>
+        {kind === 'pending' && onApprove && (
+          <button onClick={() => onApprove(doc.id)} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm cursor-pointer">✓ Approve</button>
         )}
-        <button onClick={() => onEdit(doc.id)} className="px-4 py-2 bg-amber-600 hover:bg-amber-700 font-bold rounded-xl text-sm cursor-pointer">✏ Edit (ছবি ও তথ্য)</button>
+        {onEdit && (
+          <button onClick={() => onEdit(doc.id)} className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-sm cursor-pointer">✏ Edit (ছবি ও তথ্য)</button>
+        )}
+        {mailHref && kind === 'pending' && (
+          <a href={mailHref} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-900 font-bold rounded-xl text-sm no-underline">✉ Notify</a>
+        )}
         {kind === 'published' && (
           <>
             <a href={`/heritage?docId=${doc.id}`} target="_blank" rel="noreferrer" className="px-4 py-2 bg-sky-600 hover:bg-sky-700 font-bold rounded-xl text-sm no-underline text-white">📖 বইটি দেখুন</a>
-            <button onClick={() => onUnpublish(doc.id)} className="px-4 py-2 bg-gray-700 hover:bg-gray-600 font-bold rounded-xl text-sm cursor-pointer">↩ Unpublish</button>
+            {onUnpublish && (
+              <button onClick={() => onUnpublish(doc.id)} className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-900 font-bold rounded-xl text-sm cursor-pointer">↩ Unpublish</button>
+            )}
           </>
         )}
-        <button onClick={() => onDelete(doc.id)} className="px-4 py-2 bg-rose-600 hover:bg-rose-700 font-bold rounded-xl text-sm cursor-pointer">🗑 Delete</button>
+        {onDelete && (
+          <button onClick={() => onDelete(doc.id)} className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-sm cursor-pointer">🗑 Delete</button>
+        )}
       </div>
     </div>
   )
@@ -576,7 +609,7 @@ function DocCard({ doc, albums, kind, onApprove, onEdit, onDelete, onUnpublish, 
 
 /* ───────────────────────── মূল অ্যাডমিন হেরিটেজ প্যানেল ───────────────────────── */
 
-export default function AdminHeritage() {
+export default function AdminHeritage({ startEditId = null }) {
   const [mandapList, setMandapList] = useState([])
   const [pending, setPending] = useState([])
   const [published, setPublished] = useState([])
@@ -615,6 +648,14 @@ export default function AdminHeritage() {
   useEffect(() => {
     loadData()
   }, [])
+
+  // ড্যাশবোর্ড থেকে "Edit" চাপলে সরাসরি এডিটর খুলে যাবে
+  useEffect(() => {
+    if (startEditId) {
+      setShowCreate(false)
+      setEditingId(startEditId)
+    }
+  }, [startEditId])
 
   async function approve(id) {
     const { error } = await sb.from('heritage_docs').update({ status: 'approved' }).eq('id', id)
@@ -660,8 +701,8 @@ export default function AdminHeritage() {
 
   const renderDoc = (d, kind) =>
     editingId === d.id ? (
-      <div key={d.id} className="p-5 rounded-2xl bg-gray-900 border border-orange-500/40">
-        <h4 className="font-bold text-orange-400 mb-4">✏ সম্পাদনা করুন — {d.mandaps?.name_bn || d.mandaps?.name} ({d.year})</h4>
+      <div key={d.id} className="p-5 rounded-2xl bg-white border-2 border-orange-400 shadow-md">
+        <h4 className="font-bold text-orange-800 mb-4">✏ সম্পাদনা করুন — {d.mandaps?.name_bn || d.mandaps?.name} ({d.year})</h4>
         <DocEditor
           mode="edit"
           doc={d}
@@ -691,21 +732,22 @@ export default function AdminHeritage() {
     )
 
   return (
-    <div className="ah-root max-w-5xl mx-auto p-4 sm:p-6 space-y-8 bg-gray-950 text-gray-100 rounded-3xl border border-gray-800">
+    <div className="ah-root max-w-5xl mx-auto space-y-6 text-neutral-900">
       {/* সাইটের গ্লোবাল input CSS যেন এই প্যানেলের লেখা/ব্যাকগ্রাউন্ড উল্টে না দেয় */}
       <style>{`
         .ah-root input:not([type='checkbox']):not([type='file']):not([type='radio']),
         .ah-root textarea,
         .ah-root select {
-          background-color: #1f2937 !important;
-          color: #f3f4f6 !important;
-          border-color: #374151 !important;
+          background-color: #ffffff !important;
+          color: #111827 !important;
+          border-color: #94a3b8 !important;
         }
         .ah-root input::placeholder,
-        .ah-root textarea::placeholder { color: #6b7280 !important; }
+        .ah-root textarea::placeholder { color: #94a3b8 !important; }
       `}</style>
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-orange-500">📋 হেরিটেজ এডমিন কন্ট্রোল প্যানেল</h2>
+
+      <div className="flex items-center justify-between flex-wrap gap-3 p-4 rounded-2xl bg-white border-2 border-slate-300 border-l-8 border-l-orange-500 shadow-md">
+        <h2 className="text-xl sm:text-2xl font-extrabold text-neutral-900">📋 হেরিটেজ এডমিন কন্ট্রোল প্যানেল</h2>
         <button
           onClick={() => {
             setEditingId(null)
@@ -719,8 +761,8 @@ export default function AdminHeritage() {
 
       {note && (
         <p
-          className={`p-3 rounded-xl text-sm border ${
-            note.type === 'err' ? 'bg-rose-500/15 text-rose-300 border-rose-500/30' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+          className={`p-3 rounded-xl text-sm font-medium border-2 ${
+            note.type === 'err' ? 'bg-rose-50 text-rose-800 border-rose-300' : 'bg-emerald-50 text-emerald-800 border-emerald-300'
           }`}
         >
           {note.text}
@@ -729,36 +771,32 @@ export default function AdminHeritage() {
 
       {/* নতুন তৈরি */}
       {showCreate && (
-        <div className="p-5 rounded-2xl bg-gray-900 border border-amber-500/30">
-          <h3 className="text-xl font-bold text-amber-400 mb-4">➕ নতুন হেরিটেজ নথি প্রকাশ করুন (Admin Create)</h3>
+        <div className="p-5 rounded-2xl bg-white border-2 border-amber-400 shadow-md">
+          <h3 className="text-lg font-bold text-amber-800 mb-4">➕ নতুন হেরিটেজ নথি প্রকাশ করুন (Admin Create)</h3>
           <DocEditor mode="create" mandapList={mandapList} onSaved={afterSave} onCancel={() => setShowCreate(false)} notify={notify} onZoom={setZoom} />
         </div>
       )}
 
       {/* পেন্ডিং */}
       <div className="space-y-4">
-        <h3 className="text-xl font-bold text-amber-400">⏳ ইউজারদের পেন্ডিং সাবমিশন ({pending.length})</h3>
-        {!pending.length && <p className="text-sm text-gray-400">কোনো পেন্ডিং সাবমিশন নেই।</p>}
+        <div className="px-4 py-2.5 rounded-xl bg-amber-100 border-2 border-amber-300 text-amber-900 font-bold">
+          ⏳ ইউজারদের পেন্ডিং সাবমিশন ({pending.length})
+        </div>
+        {!pending.length && <p className="p-4 rounded-xl bg-white border-2 border-dashed border-slate-300 text-sm text-slate-600">কোনো পেন্ডিং সাবমিশন নেই।</p>}
         {pending.map((d) => renderDoc(d, 'pending'))}
       </div>
 
       {/* প্রকাশিত */}
-      <div className="space-y-4 pt-6 border-t border-gray-800">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <h3 className="text-xl font-bold text-emerald-400">✅ প্রকাশিত হেরিটেজ আর্টিকেল ({published.length})</h3>
+      <div className="space-y-4 pt-2">
+        <div className="flex items-center justify-between flex-wrap gap-3 px-4 py-2.5 rounded-xl bg-emerald-100 border-2 border-emerald-300">
+          <h3 className="font-bold text-emerald-900">✅ প্রকাশিত হেরিটেজ আর্টিকেল ({published.length})</h3>
           <input className={`${inp} max-w-xs`} placeholder="🔍 মণ্ডপ / সাল / শিরোনাম খুঁজুন" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
-        {!filteredPublished.length && <p className="text-sm text-gray-400">কিছু পাওয়া যায়নি।</p>}
+        {!filteredPublished.length && <p className="p-4 rounded-xl bg-white border-2 border-dashed border-slate-300 text-sm text-slate-600">কিছু পাওয়া যায়নি।</p>}
         {filteredPublished.map((d) => renderDoc(d, 'published'))}
       </div>
 
-      {/* ছবি বড় করে দেখা */}
-      {zoom && (
-        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 cursor-zoom-out" onClick={() => setZoom(null)}>
-          <img src={zoom} alt="" className="max-w-full max-h-full object-contain rounded-lg" />
-          <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-gray-800 text-white font-bold cursor-pointer">✕</button>
-        </div>
-      )}
+      <Lightbox src={zoom} onClose={() => setZoom(null)} />
     </div>
   )
 }
