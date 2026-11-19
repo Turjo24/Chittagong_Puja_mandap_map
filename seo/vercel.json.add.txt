@@ -1,0 +1,13 @@
+Tomar existing vercel.json e "rewrites" er MODDHE, SPA catch-all rule er AGE ei ta add koro
+(ager rewrites gulo, /api/share shoho, jemon ache temon thakbe):
+
+{ "source": "/sitemap.xml", "destination": "/api/sitemap" },
+
+Example:
+{
+  "rewrites": [
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    ... tomar ager rules ...
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

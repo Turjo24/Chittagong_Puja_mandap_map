@@ -13,6 +13,8 @@ import About from './About'
 import Tutorial from './Tutorial'
 import { T } from './i18n'
 import HeritagePage from './HeritagePage'
+import Chatbot from './Chatbot'
+import { applySeo } from './Seo'
 import './styles.css'
 
 const Admin = lazy(() => import('./Admin'))
@@ -32,7 +34,7 @@ const hav = (a, b) => {
   return 12742 * Math.asin(Math.sqrt(h))
 }
 
-export default function App() {
+function AppInner() {
   const [lang, setLang] = useState(localStorage.getItem('lang') || 'bn')
   const [dark, setDark] = useState(localStorage.getItem('dark') === '1')
   const [mandaps, setMandaps] = useState([]), [covers, setCovers] = useState({})
@@ -107,9 +109,34 @@ export default function App() {
     document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
     localStorage.setItem('dark', dark ? '1' : '0')
   }, [dark])
-  useEffect(() => { localStorage.setItem('lang', lang) }, [lang])
+  useEffect(() => {
+    localStorage.setItem('lang', lang)
+    document.documentElement.lang = lang === 'en' ? 'en' : 'bn'
+    window.dispatchEvent(new CustomEvent('applang', { detail: lang })) // chatbot er bhasha sync
+  }, [lang])
   // language change hole selected area reset (nahole ager language er value diye filter hoye list faka hoy)
   useEffect(() => { setArea('') }, [lang])
+
+  // ---- Chatbot -> map control ----
+  useEffect(() => {
+    const onFocus = (e) => {
+      const m = mandaps.find((x) => String(x.id) === String(e.detail?.id))
+      if (!m) return
+      if (window.location.pathname !== '/') { window.history.pushState({}, '', '/'); setRoute('/') }
+      setSuggest(false); setSel(m)
+      setFocus({ id: m.id, lat: m.lat, lng: m.lng, zoom: 17, ts: Date.now() })
+    }
+    const onMe = (e) => {
+      if (window.location.pathname !== '/') { window.history.pushState({}, '', '/'); setRoute('/') }
+      setMe(e.detail); setFocus({ ...e.detail, zoom: 15, ts: Date.now() })
+    }
+    window.addEventListener('chat:focus', onFocus)
+    window.addEventListener('chat:me', onMe)
+    return () => { window.removeEventListener('chat:focus', onFocus); window.removeEventListener('chat:me', onMe) }
+  }, [mandaps])
+
+  // ---- SEO: route / selected mandap / language bodlale title+meta update ----
+  useEffect(() => { applySeo({ route, sel, lang }) }, [route, sel, lang])
 
   const sub = (el) => <><Live /><Nav lang={lang} setLang={setLang} dark={dark} setDark={setDark} route={route} tools /><Suspense fallback={<div className="page" />}>{el}</Suspense></>
   const rt = route.toLowerCase() // case-insensitive, jate #/Sponsors ba #/Representatives o kaj kore
@@ -229,6 +256,16 @@ export default function App() {
           {suggest && <Suggest t={t} picked={picked} onClose={() => setSuggest(false)} />}
         </div>
       </div>
+    </>
+  )
+}
+
+// Chatbot sob page e thake (AppInner er early return er baire)
+export default function App() {
+  return (
+    <>
+      <AppInner />
+      <Chatbot />
     </>
   )
 }
