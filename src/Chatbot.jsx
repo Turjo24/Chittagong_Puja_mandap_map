@@ -1,7 +1,28 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-// ---------- texts ----------
+// ============================================================
+// CONFIG
+// ============================================================
+
+// Vercel backend: same API for workers.dev, pages.dev and .com
+const CHAT_API = 'https://ctgpujamandap.vercel.app/api/chat'
+
+const STEP_MS = 9000
+
+const go = (url) => {
+  if (window.location.pathname + window.location.search !== url) {
+    window.history.pushState({}, '', url)
+  }
+  window.dispatchEvent(new PopStateEvent('popstate'))
+}
+
+const isMobile = () => window.innerWidth < 700
+
+// ============================================================
+// TRANSLATIONS
+// ============================================================
+
 const TXT = {
   bn: {
     title: 'পূজা সহায়ক',
@@ -19,7 +40,6 @@ const TXT = {
       'ওয়েবসাইটের ফিচার ঘুরিয়ে দেখাও'
     ],
     km: 'কিমি',
-    openMap: 'মানচিত্রে',
     openHer: 'হেরিটেজ খুলুন',
     goPage: 'পেজে যান',
     tour: 'ফিচার ট্যুর',
@@ -36,13 +56,14 @@ const TXT = {
     welcomeMessage: 'আমি Chattogram Puja Mandap Guide-এর ভার্চুয়াল অ্যাসিস্ট্যান্ট।',
     welcomeHelp: 'Sir, need any help? 😊',
     welcomeInfo: 'কাছের মণ্ডপ খোঁজা, হেরিটেজ, রুট ও ভাড়া এবং ওয়েবসাইটের ফিচার সম্পর্কে সাহায্য করতে পারি।',
-    welcomeButton: 'আমার সাথে কথা বলুন →'
+    welcomeButton: 'আমার সাথে কথা বলুন →',
+    online: 'অনলাইন · সাহায্যের জন্য প্রস্তুত'
   },
 
   en: {
     title: 'Puja Guide',
     sub: 'Mandaps, heritage, routes — ask anything',
-    hello: 'Hello! I am Puja Guide 🪔 Tell me where you are (or tap 📍) and I will show the nearest mandaps. Ask about a mandap\'s heritage or the website features too.',
+    hello: 'Hello! I am Puja Guide 🪔 Tell me where you are (or tap 📍) and I will show the nearest mandaps. Ask about a mandap\'s heritage or website features too.',
     ph: 'Type here…',
     send: 'Send',
     loc: 'My location',
@@ -55,7 +76,6 @@ const TXT = {
       'Show me the website features'
     ],
     km: 'km',
-    openMap: 'On map',
     openHer: 'Open heritage',
     goPage: 'Go to page',
     tour: 'Feature tour',
@@ -72,11 +92,15 @@ const TXT = {
     welcomeMessage: 'I am the virtual assistant of Chattogram Puja Mandap Guide.',
     welcomeHelp: 'Sir, need any help? 😊',
     welcomeInfo: 'I can help you find nearby mandaps, explore heritage, check routes & fares, and discover website features.',
-    welcomeButton: 'Chat with me →'
+    welcomeButton: 'Chat with me →',
+    online: 'Online · Ready to help'
   }
 }
 
-// ---------- Feature tour ----------
+// ============================================================
+// FEATURE TOUR
+// ============================================================
+
 const STEPS = [
   {
     path: '/',
@@ -184,283 +208,25 @@ const STEPS = [
   }
 ]
 
-const STEP_MS = 9000
+// ============================================================
+// TAILWIND THEME CLASSES
+// ============================================================
 
-const go = (url) => {
-  if (window.location.pathname + window.location.search !== url) {
-    window.history.pushState({}, '', url)
-  }
-  window.dispatchEvent(new PopStateEvent('popstate'))
-}
+const panel =
+  'bg-[var(--surface,#fffdf8)] text-[var(--ink,#2a1512)] border border-[var(--line,#e8dcc4)] shadow-[0_24px_60px_-18px_rgba(0,0,0,0.55)]'
 
-const isMobile = () => window.innerWidth < 700
+const goldButton =
+  'border border-[var(--gold,#b8892e)] bg-[var(--surface,#fffdf8)] text-[var(--maroon,#7a1620)] dark:text-[#e4bf70] rounded-full px-3 py-1.5 text-xs font-semibold hover:bg-amber-50 dark:hover:bg-white/10 transition disabled:opacity-40 disabled:cursor-not-allowed'
 
-// ---------- Styles ----------
-const CSS = `
-.cb-fab {
-  position:fixed; right:16px; bottom:16px; z-index:9000;
-  width:58px; height:58px; border-radius:50%;
-  border:2px solid var(--gold,#b8892e);
-  background:var(--maroon,#7a1620); color:#fff;
-  font-size:26px; cursor:pointer;
-  box-shadow:0 10px 26px -8px rgba(0,0,0,.55);
-  display:flex; align-items:center; justify-content:center;
-}
-.cb-fab:hover { transform:scale(1.05); }
+const maroonButton =
+  'rounded-xl bg-[var(--maroon,#7a1620)] text-white font-bold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed'
 
-.cb-dot {
-  position:absolute; top:4px; right:4px;
-  width:12px; height:12px; border-radius:50%;
-  background:#ffb300; border:2px solid #fff;
-}
-
-/* Welcome popup */
-.cb-welcome {
-  position:fixed;
-  right:22px;
-  bottom:88px;
-  z-index:8999;
-  width:300px;
-  max-width:calc(100vw - 32px);
-  padding:17px;
-  border-radius:17px;
-  background:var(--surface,#fffdf8);
-  color:var(--ink,#2a1512);
-  border:1px solid var(--gold,#b8892e);
-  box-shadow:0 15px 40px rgba(0,0,0,.25);
-  animation:cb-pop .4s ease-out;
-  line-height:1.5;
-}
-
-.cb-welcome-head {
-  display:flex;
-  align-items:center;
-  gap:9px;
-  margin-bottom:12px;
-}
-
-.cb-welcome-icon {
-  width:38px;
-  height:38px;
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:var(--maroon,#7a1620);
-  color:white;
-  font-size:21px;
-}
-
-.cb-welcome-head strong {
-  color:var(--maroon,#7a1620);
-  font-size:14px;
-}
-
-[data-theme=dark] .cb-welcome-head strong {
-  color:#e4bf70;
-}
-
-.cb-welcome-status {
-  font-size:11px;
-  color:#16a34a;
-}
-
-.cb-welcome p {
-  margin:8px 0;
-  font-size:13.5px;
-}
-
-.cb-welcome-info {
-  font-size:12px;
-  opacity:.8;
-  line-height:1.6;
-}
-
-.cb-welcome-btn {
-  width:100%;
-  margin-top:13px;
-  padding:10px;
-  border:0;
-  border-radius:11px;
-  background:var(--maroon,#7a1620);
-  color:#fff;
-  font-weight:700;
-  cursor:pointer;
-}
-
-.cb-welcome-btn:hover {
-  opacity:.9;
-}
-
-.cb-welcome-x {
-  position:absolute;
-  top:8px;
-  right:10px;
-  background:transparent;
-  border:0;
-  color:inherit;
-  font-size:21px;
-  cursor:pointer;
-}
-
-@keyframes cb-pop {
-  from { opacity:0; transform:translateY(14px) scale(.97); }
-  to { opacity:1; transform:translateY(0) scale(1); }
-}
-
-.cb-win {
-  position:fixed; right:16px; bottom:86px; z-index:9001;
-  width:370px; max-width:calc(100vw - 24px);
-  height:540px; max-height:calc(100dvh - 110px);
-  display:flex; flex-direction:column;
-  background:var(--surface,#fffdf8);
-  color:var(--ink,#2a1512);
-  border:1px solid var(--line,#e8dcc4);
-  border-radius:18px;
-  box-shadow:0 24px 60px -18px rgba(0,0,0,.55);
-  overflow:hidden;
-}
-
-.cb-head {
-  padding:12px 14px;
-  background:var(--maroon,#7a1620);
-  color:#fff;
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-.cb-head h4 { margin:0; font-size:16px; line-height:1.2; }
-.cb-head small { opacity:.85; font-size:12px; }
-
-.cb-x {
-  margin-left:auto; background:transparent; border:0;
-  color:#fff; font-size:22px; cursor:pointer; line-height:1;
-}
-
-.cb-body {
-  flex:1; overflow-y:auto; padding:12px;
-  display:flex; flex-direction:column; gap:10px;
-}
-
-.cb-m {
-  max-width:88%; padding:9px 12px;
-  border-radius:14px; font-size:14.5px;
-  line-height:1.5; white-space:pre-wrap;
-  word-break:break-word;
-}
-
-.cb-m.bot {
-  align-self:flex-start;
-  background:rgba(184,137,46,.14);
-  border:1px solid var(--line,#e8dcc4);
-}
-
-.cb-m.user {
-  align-self:flex-end;
-  background:var(--maroon,#7a1620);
-  color:#fff;
-}
-
-.cb-acts {
-  display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;
-}
-
-.cb-act {
-  border:1px solid var(--gold,#b8892e);
-  background:var(--surface,#fffdf8);
-  color:var(--maroon,#7a1620);
-  border-radius:999px; padding:5px 10px;
-  font-size:12.5px; cursor:pointer; font-weight:600;
-}
-
-[data-theme=dark] .cb-act { color:#e4bf70; }
-
-.cb-chips {
-  display:flex; flex-wrap:wrap;
-  gap:6px; padding:0 12px 8px;
-}
-
-.cb-in {
-  display:flex; gap:6px; padding:10px;
-  border-top:1px solid var(--line,#e8dcc4);
-}
-
-.cb-in input {
-  flex:1; min-width:0; padding:10px 12px;
-  border-radius:12px;
-  border:1px solid var(--line,#e8dcc4);
-  background:var(--bg,#faf5ec);
-  color:inherit; font:inherit; font-size:14.5px;
-}
-
-.cb-in button {
-  border:0; border-radius:12px;
-  padding:0 14px; cursor:pointer; font-weight:700;
-}
-
-.cb-send { background:var(--maroon,#7a1620); color:#fff; }
-.cb-loc { background:rgba(184,137,46,.2); font-size:18px; }
-.cb-typing { align-self:flex-start; opacity:.7; font-size:13px; }
-
-.cb-tour {
-  position:fixed; left:50%; transform:translateX(-50%);
-  bottom:14px; z-index:9002;
-  width:min(560px,calc(100vw - 20px));
-  background:var(--surface,#fffdf8);
-  color:var(--ink,#2a1512);
-  border:2px solid var(--gold,#b8892e);
-  border-radius:16px; padding:12px 14px;
-  box-shadow:0 20px 50px -14px rgba(0,0,0,.6);
-}
-
-.cb-tour b { color:var(--maroon,#7a1620); }
-[data-theme=dark] .cb-tour b { color:#e4bf70; }
-
-.cb-bar {
-  height:4px; border-radius:4px;
-  background:rgba(184,137,46,.25);
-  margin:8px 0; overflow:hidden;
-}
-
-.cb-bar i {
-  display:block; height:100%;
-  background:var(--gold,#b8892e);
-}
-
-.cb-bar i.run {
-  animation:cbfill ${STEP_MS}ms linear forwards;
-}
-
-@keyframes cbfill {
-  from { width:0; }
-  to { width:100%; }
-}
-
-.cb-trow {
-  display:flex; gap:6px;
-  flex-wrap:wrap; margin-top:6px;
-}
-
-@media (max-width:700px) {
-  .cb-win {
-    right:8px; left:8px; width:auto;
-    bottom:78px; height:62dvh;
-  }
-
-  .cb-fab { right:12px; bottom:12px; }
-  .cb-tour { bottom:10px; }
-
-  .cb-welcome {
-    right:14px;
-    bottom:82px;
-    width:290px;
-  }
-}
-`
+// ============================================================
+// CHATBOT COMPONENT
+// ============================================================
 
 export default function Chatbot() {
-  const [lang, setLang] = useState(
+  const [lang, setLang] = useState(() =>
     localStorage.getItem('lang') === 'en' ? 'en' : 'bn'
   )
 
@@ -476,9 +242,15 @@ export default function Chatbot() {
 
   const bodyRef = useRef(null)
 
-  // ---------- Language ----------
+  const li = lang === 'bn' ? 0 : 1
+
+  // ---------- Language listener ----------
+
   useEffect(() => {
-    const h = (e) => setLang(e.detail === 'en' ? 'en' : 'bn')
+    const h = (e) => {
+      const next = e.detail === 'en' ? 'en' : 'bn'
+      setLang(next)
+    }
 
     window.addEventListener('applang', h)
 
@@ -486,8 +258,12 @@ export default function Chatbot() {
   }, [])
 
   // ---------- Welcome popup ----------
+
   useEffect(() => {
-    if (open || msgs.length > 0) return
+    if (open || msgs.length > 0) {
+      setWelcome(false)
+      return
+    }
 
     const timer = setTimeout(() => {
       setWelcome(true)
@@ -496,23 +272,26 @@ export default function Chatbot() {
     return () => clearTimeout(timer)
   }, [open, msgs.length])
 
-  // ---------- Initial message ----------
+  // ---------- Initial greeting ----------
+
   useEffect(() => {
     if (open && !msgs.length) {
       setWelcome(false)
       setMsgs([{ role: 'bot', text: t.hello }])
     }
-  }, [open])
+  }, [open, msgs.length, t.hello])
 
   // ---------- Auto scroll ----------
+
   useEffect(() => {
     bodyRef.current?.scrollTo({
-      top: 1e6,
+      top: bodyRef.current.scrollHeight,
       behavior: 'smooth'
     })
   }, [msgs, busy, open])
 
-  // ---------- Tour ----------
+  // ---------- Feature tour ----------
+
   const startTour = () => {
     setTour({ i: 0, paused: false })
 
@@ -525,7 +304,7 @@ export default function Chatbot() {
     const s = STEPS[tour.i]
 
     go(s.path)
-    window.scrollTo({ top: 0 })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
 
     if (tour.paused) return
 
@@ -542,16 +321,24 @@ export default function Chatbot() {
     return () => clearTimeout(id)
   }, [tour?.i, tour?.paused, tour?.done])
 
+  // ---------- Tour completed ----------
+
   useEffect(() => {
-    if (tour?.done) {
-      go('/')
-      setMsgs((m) => [...m, { role: 'bot', text: t.done }])
-      setTour(null)
-      setOpen(true)
-    }
+    if (!tour?.done) return
+
+    go('/')
+
+    setMsgs((m) => [
+      ...m,
+      { role: 'bot', text: t.done }
+    ])
+
+    setTour(null)
+    setOpen(true)
   }, [tour?.done])
 
   // ---------- Actions ----------
+
   const run = (a) => {
     if (a.type === 'show_mandap') {
       window.dispatchEvent(
@@ -564,13 +351,18 @@ export default function Chatbot() {
     } else if (a.type === 'go_page') {
       go(a.path)
     } else if (a.type === 'tour') {
-      return startTour()
+      startTour()
+      return
+    } else if (a.type === 'ask_location') {
+      askLocation()
+      return
     }
 
     if (isMobile()) setOpen(false)
   }
 
   // ---------- Send message ----------
+
   const send = async (raw, locOverride) => {
     const message = (raw ?? text).trim()
 
@@ -579,7 +371,7 @@ export default function Chatbot() {
     setText('')
 
     const history = msgs.slice(-6).map((m) => ({
-      role: m.role === 'user' ? 'user' : 'bot',
+      role: m.role === 'user' ? 'user' : 'model',
       text: m.text
     }))
 
@@ -591,7 +383,7 @@ export default function Chatbot() {
     setBusy(true)
 
     try {
-      const r = await fetch('/api/chat', {
+      const r = await fetch(CHAT_API, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -610,7 +402,9 @@ export default function Chatbot() {
 
       const j = await r.json()
 
-      const actions = j.actions || []
+      const actions = Array.isArray(j.actions)
+        ? j.actions
+        : []
 
       setMsgs((m) => [
         ...m,
@@ -621,6 +415,7 @@ export default function Chatbot() {
         }
       ])
 
+      // Automatically execute first navigation action
       const first = actions.find(
         (a) => a.type !== 'ask_location'
       )
@@ -636,18 +431,20 @@ export default function Chatbot() {
         ...m,
         { role: 'bot', text: t.err }
       ])
+    } finally {
+      setBusy(false)
     }
-
-    setBusy(false)
   }
 
   // ---------- Location ----------
+
   const askLocation = () => {
     if (!navigator.geolocation) {
-      return setMsgs((m) => [
+      setMsgs((m) => [
         ...m,
         { role: 'bot', text: t.locDenied }
       ])
+      return
     }
 
     navigator.geolocation.getCurrentPosition(
@@ -667,12 +464,14 @@ export default function Chatbot() {
 
         send(t.locAsk, pos)
       },
+
       () => {
         setMsgs((m) => [
           ...m,
           { role: 'bot', text: t.locDenied }
         ])
       },
+
       {
         enableHighAccuracy: true,
         timeout: 10000
@@ -681,59 +480,73 @@ export default function Chatbot() {
   }
 
   // ---------- Action labels ----------
-  const label = (a) =>
-    a.type === 'show_mandap'
-      ? `📍 ${a.name}${a.km != null ? ` · ${a.km} ${t.km}` : ''}`
-      : a.type === 'open_heritage'
-        ? `📖 ${t.openHer}: ${a.name}`
-        : a.type === 'go_page'
-          ? `➜ ${t.goPage}: ${
-              STEPS.find((s) => s.path === a.path)?.t[
-                lang === 'bn' ? 0 : 1
-              ] || a.path
-            }`
-          : a.type === 'tour'
-            ? `🧭 ${t.tour}`
-            : ''
+
+  const label = (a) => {
+    if (a.type === 'show_mandap') {
+      return `📍 ${a.name}${a.km != null ? ` · ${a.km} ${t.km}` : ''}`
+    }
+
+    if (a.type === 'open_heritage') {
+      return `📖 ${t.openHer}: ${a.name}`
+    }
+
+    if (a.type === 'go_page') {
+      const page = STEPS.find((s) => s.path === a.path)
+
+      return `➜ ${t.goPage}: ${
+        page?.t[li] || a.path
+      }`
+    }
+
+    if (a.type === 'tour') {
+      return `🧭 ${t.tour}`
+    }
+
+    return ''
+  }
 
   const cur = tour && !tour.done
     ? STEPS[tour.i]
     : null
 
-  const li = lang === 'bn' ? 0 : 1
+  // ==========================================================
+  // UI
+  // ==========================================================
 
   return (
     <>
-      <style>{CSS}</style>
+      {/* ================================================== */}
+      {/* FEATURE TOUR */}
+      {/* ================================================== */}
 
-      {/* ---------- Feature Tour ---------- */}
       {cur && (
-        <div className="cb-tour" role="status">
-          <div>
-            <b>
-              {t.tour} · {t.step} {tour.i + 1}/{STEPS.length}: {cur.t[li]}
-            </b>
+        <div
+          className={`fixed bottom-3 left-1/2 z-[9002] w-[min(560px,calc(100vw-20px))] -translate-x-1/2 rounded-2xl border-2 border-[var(--gold,#b8892e)] p-3.5 ${panel}`}
+          role="status"
+        >
+          <div className="font-bold text-[var(--maroon,#7a1620)] dark:text-[#e4bf70]">
+            {t.tour} · {t.step} {tour.i + 1}/{STEPS.length}: {cur.t[li]}
           </div>
 
-          <div style={{
-            fontSize: 14,
-            marginTop: 4,
-            lineHeight: 1.5
-          }}>
+          <p className="mt-2 text-sm leading-relaxed">
             {cur.d[li]}
-          </div>
+          </p>
 
-          <div className="cb-bar">
-            <i
+          <div className="my-3 h-1 overflow-hidden rounded-full bg-amber-700/15">
+            <div
               key={tour.i + String(tour.paused)}
-              className={tour.paused ? '' : 'run'}
-              style={tour.paused ? { width: '0%' } : undefined}
+              className={`h-full rounded-full bg-[var(--gold,#b8892e)] ${
+                tour.paused ? '' : 'animate-[cbfill_9s_linear_forwards]'
+              }`}
+              style={{
+                width: tour.paused ? '0%' : '100%'
+              }}
             />
           </div>
 
-          <div className="cb-trow">
+          <div className="flex flex-wrap gap-2">
             <button
-              className="cb-act"
+              className={goldButton}
               disabled={tour.i === 0}
               onClick={() =>
                 setTour({
@@ -746,7 +559,7 @@ export default function Chatbot() {
             </button>
 
             <button
-              className="cb-act"
+              className={goldButton}
               onClick={() =>
                 setTour({
                   ...tour,
@@ -758,7 +571,7 @@ export default function Chatbot() {
             </button>
 
             <button
-              className="cb-act"
+              className={goldButton}
               onClick={() =>
                 setTour(
                   tour.i + 1 >= STEPS.length
@@ -774,7 +587,7 @@ export default function Chatbot() {
             </button>
 
             <button
-              className="cb-act"
+              className={goldButton}
               onClick={() => setTour(null)}
             >
               ✕ {t.stop}
@@ -783,40 +596,56 @@ export default function Chatbot() {
         </div>
       )}
 
-      {/* ---------- Welcome Popup ---------- */}
+      {/* ================================================== */}
+      {/* WELCOME POPUP */}
+      {/* ================================================== */}
+
       {!open && welcome && (
-        <div className="cb-welcome">
+        <div
+          className={`fixed bottom-[88px] right-3.5 z-[8999] w-[290px] max-w-[calc(100vw-32px)] animate-[cbpop_.4s_ease-out] rounded-2xl border border-[var(--gold,#b8892e)] p-4 shadow-xl sm:right-[22px] sm:w-[300px] ${panel}`}
+        >
           <button
-            className="cb-welcome-x"
+            className="absolute right-2 top-1.5 rounded-full p-1 text-2xl leading-none hover:bg-black/5 dark:hover:bg-white/10"
             onClick={() => setWelcome(false)}
             aria-label={t.close}
           >
             ×
           </button>
 
-          <div className="cb-welcome-head">
-            <div className="cb-welcome-icon">🪔</div>
+          <div className="mb-3 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--maroon,#7a1620)] text-xl text-white">
+              🪔
+            </div>
 
             <div>
-              <strong>{t.welcomeTitle}</strong>
-              <div className="cb-welcome-status">
-                ● Online · Ready to help
+              <strong className="text-sm text-[var(--maroon,#7a1620)] dark:text-[#e4bf70]">
+                {t.welcomeTitle}
+              </strong>
+
+              <div className="text-[11px] text-green-600">
+                ● {t.online}
               </div>
             </div>
           </div>
 
-          <p><b>{t.welcomeGreeting}</b></p>
+          <p className="my-2 text-sm font-bold">
+            {t.welcomeGreeting}
+          </p>
 
-          <p>{t.welcomeMessage}</p>
+          <p className="my-2 text-[13px] leading-relaxed">
+            {t.welcomeMessage}
+          </p>
 
-          <p><b>{t.welcomeHelp}</b></p>
+          <p className="my-2 text-[13px] font-semibold">
+            {t.welcomeHelp}
+          </p>
 
-          <div className="cb-welcome-info">
+          <p className="text-xs leading-relaxed opacity-80">
             {t.welcomeInfo}
-          </div>
+          </p>
 
           <button
-            className="cb-welcome-btn"
+            className={`mt-3 w-full px-3 py-2.5 text-sm ${maroonButton}`}
             onClick={() => {
               setWelcome(false)
               setOpen(true)
@@ -827,10 +656,13 @@ export default function Chatbot() {
         </div>
       )}
 
-      {/* ---------- Floating Button ---------- */}
+      {/* ================================================== */}
+      {/* FLOATING BUTTON */}
+      {/* ================================================== */}
+
       {!open && (
         <button
-          className="cb-fab"
+          className="fixed bottom-3 right-3 z-[9000] flex h-[58px] w-[58px] items-center justify-center rounded-full border-2 border-[var(--gold,#b8892e)] bg-[var(--maroon,#7a1620)] text-[26px] text-white shadow-[0_10px_26px_-8px_rgba(0,0,0,0.55)] transition hover:scale-105 sm:bottom-4 sm:right-4"
           aria-label={t.title}
           onClick={() => {
             setWelcome(false)
@@ -838,27 +670,40 @@ export default function Chatbot() {
           }}
         >
           🪔
-          {!msgs.length && <span className="cb-dot" />}
+
+          {!msgs.length && (
+            <span className="absolute right-1 top-1 h-3 w-3 rounded-full border-2 border-white bg-amber-400" />
+          )}
         </button>
       )}
 
-      {/* ---------- Chat Window ---------- */}
+      {/* ================================================== */}
+      {/* CHAT WINDOW */}
+      {/* ================================================== */}
+
       {open && (
         <div
-          className="cb-win"
+          className={`fixed bottom-[78px] left-2 right-2 z-[9001] flex h-[62dvh] flex-col overflow-hidden rounded-[18px] sm:bottom-[86px] sm:left-auto sm:right-4 sm:h-[540px] sm:max-h-[calc(100dvh-110px)] sm:w-[370px] ${panel}`}
           role="dialog"
           aria-label={t.title}
         >
-          <div className="cb-head">
-            <span style={{ fontSize: 24 }}>🪔</span>
+          {/* HEADER */}
 
-            <div>
-              <h4>{t.title}</h4>
-              <small>{t.sub}</small>
+          <div className="flex shrink-0 items-center gap-2.5 bg-[var(--maroon,#7a1620)] px-3.5 py-3 text-white">
+            <span className="text-2xl">🪔</span>
+
+            <div className="min-w-0">
+              <h4 className="text-base font-bold leading-tight">
+                {t.title}
+              </h4>
+
+              <small className="text-xs opacity-85">
+                {t.sub}
+              </small>
             </div>
 
             <button
-              className="cb-x"
+              className="ml-auto rounded-full px-2 text-2xl leading-none text-white hover:bg-white/10"
               onClick={() => setOpen(false)}
               aria-label={t.close}
             >
@@ -866,22 +711,31 @@ export default function Chatbot() {
             </button>
           </div>
 
-          <div className="cb-body" ref={bodyRef}>
+          {/* MESSAGES */}
+
+          <div
+            className="flex flex-1 flex-col gap-2.5 overflow-y-auto p-3"
+            ref={bodyRef}
+          >
             {msgs.map((m, i) => (
               <div
                 key={i}
-                className={'cb-m ' + m.role}
+                className={`max-w-[88%] whitespace-pre-wrap break-words rounded-[14px] px-3 py-2 text-sm leading-relaxed ${
+                  m.role === 'user'
+                    ? 'self-end bg-[var(--maroon,#7a1620)] text-white'
+                    : 'self-start border border-[var(--line,#e8dcc4)] bg-[rgba(184,137,46,0.14)] text-[var(--ink,#2a1512)] dark:text-white'
+                }`}
               >
                 {m.text}
 
-                {m.actions?.some((a) => label(a)) && (
-                  <div className="cb-acts">
+                {m.actions?.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
                     {m.actions
-                      .filter((a) => a.type !== 'ask_location')
+                      .filter((a) => a.type !== 'ask_location' && label(a))
                       .map((a, k) => (
                         <button
                           key={k}
-                          className="cb-act"
+                          className={goldButton}
                           onClick={() => run(a)}
                         >
                           {label(a)}
@@ -892,7 +746,7 @@ export default function Chatbot() {
                       (a) => a.type === 'ask_location'
                     ) && (
                       <button
-                        className="cb-act"
+                        className={goldButton}
                         onClick={askLocation}
                       >
                         📍 {t.loc}
@@ -903,19 +757,28 @@ export default function Chatbot() {
               </div>
             ))}
 
+            {/* LOADING */}
+
             {busy && (
-              <div className="cb-typing">…</div>
+              <div className="flex items-center gap-1.5 self-start rounded-xl bg-amber-700/10 px-3 py-2">
+                <span className="h-2 w-2 animate-bounce rounded-full bg-[var(--gold,#b8892e)]" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-[var(--gold,#b8892e)] [animation-delay:150ms]" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-[var(--gold,#b8892e)] [animation-delay:300ms]" />
+              </div>
             )}
           </div>
 
+          {/* QUICK SUGGESTIONS */}
+
           {msgs.length <= 1 && (
-            <div className="cb-chips">
-              {t.chips.map((c) => (
+            <div className="flex shrink-0 flex-wrap gap-1.5 px-3 pb-2">
+              {t.chips.map((c, i) => (
                 <button
                   key={c}
-                  className="cb-act"
+                  className={goldButton}
+                  disabled={busy}
                   onClick={() =>
-                    c === t.chips[0] && !loc
+                    i === 0 && !loc
                       ? askLocation()
                       : send(c)
                   }
@@ -926,11 +789,14 @@ export default function Chatbot() {
             </div>
           )}
 
-          <div className="cb-in">
+          {/* INPUT */}
+
+          <div className="flex shrink-0 gap-1.5 border-t border-[var(--line,#e8dcc4)] p-2.5">
             <button
-              className="cb-loc"
+              className="rounded-xl bg-[rgba(184,137,46,0.2)] px-3 text-lg transition hover:bg-amber-700/25"
               title={t.loc}
               onClick={askLocation}
+              disabled={busy}
             >
               📍
             </button>
@@ -939,16 +805,21 @@ export default function Chatbot() {
               value={text}
               placeholder={t.ph}
               maxLength={500}
+              disabled={busy}
+              className="min-w-0 flex-1 rounded-xl border border-[var(--line,#e8dcc4)] bg-[var(--bg,#faf5ec)] px-3 py-2.5 text-sm text-[var(--ink,#2a1512)] outline-none placeholder:text-gray-500 focus:border-[var(--gold,#b8892e)] dark:text-white"
               onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) =>
-                e.key === 'Enter' && send()
-              }
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  send()
+                }
+              }}
             />
 
             <button
-              className="cb-send"
+              className={`px-3 text-sm ${maroonButton}`}
               onClick={() => send()}
-              disabled={busy}
+              disabled={busy || !text.trim()}
             >
               {t.send}
             </button>
