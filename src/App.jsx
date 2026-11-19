@@ -14,6 +14,7 @@ import Tutorial from './Tutorial'
 import { T } from './i18n'
 import HeritagePage from './HeritagePage'
 import Chatbot from './Chatbot'
+import BlogTicker from './BlogTicker'
 import { applySeo } from './Seo'
 import './styles.css'
 
@@ -32,6 +33,12 @@ const hav = (a, b) => {
   const r = (x) => (x * Math.PI) / 180, dLat = r(b.lat - a.lat), dLng = r(b.lng - a.lng)
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dLng / 2) ** 2
   return 12742 * Math.asin(Math.sqrt(h))
+}
+
+// main map page: '/' ba '/mandap/<slug>'
+const onMain = () => {
+  const p = window.location.pathname.toLowerCase()
+  return p === '/' || p.startsWith('/mandap/')
 }
 
 function AppInner() {
@@ -74,12 +81,14 @@ function AppInner() {
       if (error) {
         console.error('Supabase error:', error)
       } else {
-        console.log('Mandaps data:', data)
         setMandaps(data || [])
       }
 
       const urlParams = new URLSearchParams(window.location.search)
-      const mParam = urlParams.get('m')
+      const pm = window.location.pathname.match(/^\/mandap\/([^/]+)/i)
+      let slugFromPath = null
+      try { slugFromPath = pm ? decodeURIComponent(pm[1]) : null } catch { /* bad url */ }
+      const mParam = urlParams.get('m') || slugFromPath // purono ?m= link o kaj korbe
       if (mParam && data) {
         const target = data.find(x => x.slug === mParam || x.id == mParam)
         if (target) {
@@ -122,18 +131,27 @@ function AppInner() {
     const onFocus = (e) => {
       const m = mandaps.find((x) => String(x.id) === String(e.detail?.id))
       if (!m) return
-      if (window.location.pathname !== '/') { window.history.pushState({}, '', '/'); setRoute('/') }
+      if (!onMain()) { window.history.pushState({}, '', '/'); setRoute('/') }
       setSuggest(false); setSel(m)
       setFocus({ id: m.id, lat: m.lat, lng: m.lng, zoom: 17, ts: Date.now() })
     }
     const onMe = (e) => {
-      if (window.location.pathname !== '/') { window.history.pushState({}, '', '/'); setRoute('/') }
+      if (!onMain()) { window.history.pushState({}, '', '/'); setRoute('/') }
       setMe(e.detail); setFocus({ ...e.detail, zoom: 15, ts: Date.now() })
     }
     window.addEventListener('chat:focus', onFocus)
     window.addEventListener('chat:me', onMe)
     return () => { window.removeEventListener('chat:focus', onFocus); window.removeEventListener('chat:me', onMe) }
   }, [mandaps])
+
+  // ---- URL sync: mandap select hole URL = /mandap/<slug> (Google index + share er jonno) ----
+  useEffect(() => {
+    if (!loaded) return
+    const p = window.location.pathname
+    if (p !== '/' && !p.toLowerCase().startsWith('/mandap/')) return // onno page e hat dio na
+    const want = sel ? `/mandap/${encodeURIComponent(sel.slug || sel.id)}` : '/'
+    if (p !== want) { window.history.replaceState({}, '', want); setRoute(want) }
+  }, [sel, loaded])
 
   // ---- SEO: route / selected mandap / language bodlale title+meta update ----
   useEffect(() => { applySeo({ route, sel, lang }) }, [route, sel, lang])
@@ -264,6 +282,7 @@ function AppInner() {
 export default function App() {
   return (
     <>
+      <BlogTicker />
       <AppInner />
       <Chatbot />
     </>

@@ -1,6 +1,6 @@
 import { toast } from './alerts'
 
-export default function ShareButton({ m, kind = 'm', title }) {
+export default function ShareButton({ m, kind = 'm', title, compact = false }) {
   if (!m) return null
 
   const origin = window.location.origin
@@ -8,11 +8,11 @@ export default function ShareButton({ m, kind = 'm', title }) {
   // ১. ক্লিন URL (ইউজারদের দেখার জন্য আসল লিংক)
   let cleanUrl = `${origin}/?m=${m.id || m.mandap_id}`
   if (kind === 'heritage') cleanUrl = `${origin}/heritage?docId=${m.id}`
-  else if (kind === 'b') cleanUrl = `${origin}/blog?id=${m.id}`
+  else if (kind === 'b') cleanUrl = `${origin}/blog/${m.id}`
 
   // ২. ডায়নামিক কার্ডের জন্য API URL (যা ফেসবুক/হোয়াটসঅ্যাপে প্রিভিউ বানাবে)
   const placeName = title || m.mandaps?.name_bn || m.mandaps?.name || m.name_bn || m.name || 'Mandap'
-  const imageUrl = m.thumbnail_post || m.pandal_architect_photo || m.entry_point_photo || m.exit_point_photo || m.url || `${origin}/pntro.png`
+  const imageUrl = m.image_url || m.thumbnail_post || m.pandal_architect_photo || m.entry_point_photo || m.exit_point_photo || m.url || `${origin}/pntro.png`
   
   const type = kind === 'heritage' ? 'heritage' : kind === 'b' ? 'blog' : 'm'
   const docId = m.id || m.mandap_id
@@ -60,6 +60,21 @@ const copy = async () => {
       }).catch(() => {})
     }
   }
+  // chhoto version: blog card / byline er jonno
+  if (compact) {
+    const sm = { padding: '4px 10px', fontSize: 13, lineHeight: 1.2 }
+    return (
+      <div className="acts" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        <button type="button" className="btn" style={sm} aria-label="Facebook" title="Facebook" onClick={fb}>f</button>
+        <button type="button" className="btn" style={sm} aria-label="WhatsApp" title="WhatsApp" onClick={wa}>WA</button>
+        <button type="button" className="btn" style={sm} aria-label="Copy link" title="Copy link" onClick={copy}>🔗</button>
+        {typeof navigator !== 'undefined' && navigator.share && (
+          <button type="button" className="btn" style={sm} aria-label="Share" title="Share" onClick={native}>📤</button>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="acts" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
       <button type="button" className="btn pri" onClick={fb}>f Facebook e share</button>
