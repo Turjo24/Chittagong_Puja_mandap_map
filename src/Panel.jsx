@@ -146,16 +146,17 @@ export default function Panel({ m, name, t, onClose }) {
           </a>
 
           {/* সরাসরি specific mandap id দিয়ে হেরিটেজ পেজে নিয়ে যাবে */}
-          <a
-            href={`/#/heritage?id=${m.id}`}
-            target="_blank"
-            rel="noreferrer"
-            style={{ textDecoration: 'none' }}
-          >
-            <button type="button" className="btn">
-              🏛 ঐতিহ্য / Heritage
-            </button>
-          </a>
+{/* সরাসরি specific mandap id দিয়ে হেরিটেজ পেজে নিয়ে যাবে */}
+<a
+  href={`/heritage?id=${m.id}`}
+  target="_blank"
+  rel="noreferrer"
+  style={{ textDecoration: 'none' }}
+>
+  <button type="button" className="btn">
+    🏛 ঐতিহ্য / Heritage
+  </button>
+</a>
 
           <ShareButton m={m} />
         </div>
